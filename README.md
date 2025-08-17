@@ -8,31 +8,10 @@ Collection of useful Linux system maintenance scripts (monitoring, cleanup, auto
 - [Disk Monitor (`disk_monitor.sh`)](#disk_monitorsh--linux-disk-usage-monitoring-script)
 - [Another Script (future)](#another-script-name)
 
-## 🔹 Overview
-`disk_monitor.sh` is a **Bash script** designed to monitor disk usage on one or more Linux servers.  
-It checks all mounted filesystems and generates alerts if usage exceeds a defined threshold.  
-
-The script can run in two modes:
-- **Local mode** → monitor the server it’s running on.  
-- **Distributed mode** → monitor multiple servers remotely via SSH from a central master server.  
-
-This makes it useful both for personal Linux machines and production environments.
-
----
-
-## 🔹 Features
-- ✅ Configurable disk usage **threshold** (default: 90%)  
-- ✅ Checks **all filesystems** (ignores `tmpfs` and `devtmpfs`)  
-- ✅ Supports **multiple servers** using an external `servers.txt`  
-- ✅ Sends alerts to **multiple recipients** defined in `emails.txt` or as a string  
-- ✅ Logs all results (OK + ALERT) to `/var/log/disks_monitor.log`  
-- ✅ Works unattended via `cron` scheduling  
-- ✅ Clean design: configuration files in `/etc/linux_maint/`  
-
 ---
 
 
-# 📄 disk_monitor.sh — Linux Disk Usage Monitoring Script
+# 📄 disk_monitor.sh — Linux Disk Usage Monitoring Script <a name="disk_monitorsh--linux-disk-usage-monitoring-script"></a>
 
 ## 🔹 Overview
 `disk_monitor.sh` is a **Bash script** designed to monitor disk usage on one or more Linux servers.  
