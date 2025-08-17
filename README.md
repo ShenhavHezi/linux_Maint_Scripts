@@ -58,9 +58,9 @@ One server per line (hostname or IP).
 Example:
 By convention:  
 - Script itself: 
-server1.example.com
-server2.example.com
-server3.example.com
+server1
+server2
+server3
 If you don’t want a file, you can write directly in the script:
 SERVERLIST="server1.example.com,server2.example.com"
 
@@ -99,6 +99,130 @@ Add line to run every day at 8:00 AM:
 Linux system (RHEL, CentOS, Fedora, Ubuntu, Debian)
 ssh configured for passwordless login to target servers
 mail command available (mailx or mailutils)
+
+
+# 📄 distributed_health_monitor.sh — Linux Health Check Script
+
+## 🔹 Overview
+`distributed_health_monitor.sh` is a **Bash script** designed to monitor the overall health of one or more Linux servers.  
+It collects CPU, memory, load average, and disk usage, then generates a daily report.  
+
+The script can run in two modes:
+- **Local mode** → monitor the server it’s running on.  
+- **Distributed mode** → monitor multiple servers remotely via SSH from a central master server.  
+
+This makes it suitable for both personal Linux machines and production environments.
+
+---
+
+## 🔹 Features
+- ✅ Monitors **CPU load**, **memory usage**, and **disk usage**  
+- ✅ Supports **multiple servers** using an external `servers.txt`  
+- ✅ Skips servers listed in `excluded.txt`  
+- ✅ Logs all results to `/var/log/health_monitor.log`  
+- ✅ Emails the report to multiple recipients listed in `emails.txt`  
+- ✅ Works unattended via `cron` scheduling  
+- ✅ Clean design: configuration files in `/etc/linux_maint/`  
+
+---
+
+## 🔹 File Locations
+By convention:  
+- Script itself:  
+/usr/local/bin/distributed_health_monitor.sh
+
+- Configuration files:  
+ /etc/linux_maint/servers.txt # list of servers
+ /etc/linux_maint/excluded.txt # list of excluded servers
+ /etc/linux_maint/emails.txt # list of email recipients
+- Log file:
+  /var/log/health_monitor.log
+
+    
+---
+
+## 🔹 Configuration
+
+### 1. Server list
+📌 `/etc/linux_maint/servers.txt`  
+One server per line (hostname or IP).  
+Example:
+server1
+server2
+server3
+
+### 2. Excluded servers
+📌 `/etc/linux_maint/excluded.txt`  
+One server per line. Servers here will be skipped during health checks.  
+Example:
+server2
+
+### 3. Email recipients
+📌 `/etc/linux_maint/emails.txt`  
+One email per line.  
+Example:
+bob@example.com
+alice2@example.com
+
+
+---
+
+## 🔹 Usage
+
+### Run manually
+```bash
+bash /usr/local/bin/distributed_health_monitor.sh
+Run daily via cron
+
+Edit crontab:
+crontab -e
+Add line to run every day at 8:00 AM:
+0 8 * * * /usr/local/bin/distributed_health_monitor.sh
+
+🔹 Example Log Output
+==============================================
+ Linux Distributed Health Check 
+ Date: 2025-08-17 08:00:00
+==============================================
+>>> Health check on server1 (2025-08-17 08:00:00)
+--- Hostname: server1
+--- Uptime:
+ 08:00:00 up 12 days, 3:15, 3 users, load average: 1.21, 1.08, 0.95
+--- CPU Load:
+top - 08:00:01 up 12 days,  3:15,  3 users,  load average: 1.21, 1.08, 0.95
+--- Memory Usage (MB):
+              total        used        free      shared  buff/cache   available
+Mem:           7982        2100        3500         150        2382        5500
+--- Disk Usage:
+Filesystem     Type      Size  Used Avail Use% Mounted on
+/dev/sda1      ext4       50G   20G   28G  42% /
+--- Top 5 Processes by CPU:
+  PID COMMAND         %CPU %MEM
+ 1234 java            12.5  8.0
+ 5678 nginx            5.0  1.2
+...
+--- Top 5 Processes by Memory:
+  PID COMMAND         %CPU %MEM
+ 1234 java            12.5  8.0
+ 5678 postgres         2.5  6.0
+----------------------------------------------
+
+🔹 Requirements
+
+Linux system (RHEL, CentOS, Fedora, Ubuntu, Debian)
+ssh configured for passwordless login to target servers
+mail command available (mailx or mailutils)
+
+🔹 Limitations
+
+Sends one email per execution with the entire report
+Does not currently monitor network statistics or service health (can be added later)
+Requires SSH key setup for multi-server environments
+
+
+
+
+
 
 
 
