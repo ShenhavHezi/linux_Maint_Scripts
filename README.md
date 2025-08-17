@@ -64,7 +64,7 @@ bob@example.com
 If you don’t want a file, you can write directly in the script:
 ALERT_EMAIL="alice@example.com,bob@example.com"
 
-🔹 Usage
+### 🔹 Usage
 Run manually
 bash /usr/local/bin/disk_monitor.sh
 
@@ -74,7 +74,7 @@ crontab -e
 Add line to run every day at 8:00 AM:
 0 8 * * * /usr/local/bin/disk_monitor.sh
 
-🔹 Example Log Output
+### 🔹 Example Log Output
 [2025-08-17 08:00:00] === Starting distributed disk check (Threshold: 90%) ===
 [2025-08-17 08:00:01] Checking server: server1.example.com
 [2025-08-17 08:00:01] OK: server1.example.com - /dev/sda1 mounted on / is at 42%
@@ -83,7 +83,7 @@ Add line to run every day at 8:00 AM:
 [2025-08-17 08:00:02] OK: server2.example.com - /dev/sda1 mounted on / is at 68%
 [2025-08-17 08:00:02] === Distributed disk check completed ===
 
-🔹 Requirements
+### 🔹 Requirements
 
 Linux system (RHEL, CentOS, Fedora, Ubuntu, Debian)
 ssh configured for passwordless login to target servers
