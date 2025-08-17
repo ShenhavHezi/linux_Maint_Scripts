@@ -38,9 +38,9 @@ This makes it useful both for personal Linux machines and production environment
 
 ## 🔹 File Locations
 /usr/local/bin/disk_monitor.sh
-- Configuration files:
-/etc/linux_maint/servers.txt # list of servers
-/etc/linux_maint/emails.txt # list of email recipients
+- Configuration files:  
+  /etc/linux_maint/servers.txt   # list of servers  
+  /etc/linux_maint/emails.txt    # list of email recipients
 - Log file:  
 /var/log/disks_monitor.log
 
