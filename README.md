@@ -5,8 +5,8 @@ Collection of useful Linux system maintenance scripts (monitoring, cleanup, auto
 ---
 
 ## 📑 Table of Contents
-- [Disk Monitor (`disk_monitor.sh`)](#-disk-monitorsh--linux-disk-usage-monitoring-script)
-- [Another Script (future)](#-another-script-name)
+- [Disk Monitor (`disk_monitor.sh`)](#disk_monitorsh--linux-disk-usage-monitoring-script)
+- [Another Script (future)](#another-script-name)
 
 
 
