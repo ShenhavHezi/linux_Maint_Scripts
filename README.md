@@ -43,7 +43,7 @@ Inside the script:
 THRESHOLD=90
 Modify this value if you want a different threshold (e.g., 80%).
 
-2. Server list
+### 2. Server list
 
 📌 /etc/linux_maint/servers.txt
 One server per line (hostname or IP).
@@ -56,7 +56,7 @@ server3.example.com
 If you don’t want a file, you can write directly in the script:
 SERVERLIST="server1.example.com,server2.example.com"
 
-3. Email recipients
+### 3. Email recipients
 
 📌 /etc/linux_maint/emails.txt
 One email per line.
