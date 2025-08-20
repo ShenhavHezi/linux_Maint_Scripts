@@ -9,6 +9,7 @@ Collection of useful Linux system maintenance scripts (monitoring, cleanup, auto
 - [Health_Monitor (`health_monitor.sh`)](#health_monitorsh--linux-health-monitoring-script)
 - [User_Monitor (`user_monitor.sh`)](#user_monitorsh--linux-user--access-monitoring-script)
 - [Service_Monitor (`service_monitor.sh`)](#service_monitorsh--linux-service-monitoring-script)
+- [Servers_Info (`servers_info.sh`)](#servers_infosh--linux-server-information-snapshot-script) 
 ---
 
 
@@ -448,6 +449,49 @@ Auto-restart is disabled by default to avoid unintended restarts in production.
 If a service is missing entirely, the script reports it as inactive but does not attempt installation.
 Currently does not check service configuration files or resource usage (can be added later).
 
+
+# 📄 servers_info.sh — Linux Server Information Snapshot Script <a name="servers_infosh--linux-server-information-snapshot-script"></a>
+
+## 🔹 Overview
+`servers_info.sh` is a **Bash script** designed to collect comprehensive system information from one or more Linux servers.  
+It provides a daily snapshot of critical server details such as CPU, memory, storage, volume groups, processes, services, and network configuration.  
+
+The script can run in two modes:
+- **Local mode** → gather information from the server it’s running on.  
+- **Distributed mode** → gather information from multiple servers remotely via SSH from a central master server.  
+
+This makes it useful for daily audits, troubleshooting, and long-term system documentation.
+
+---
+
+## 🔹 Features
+- ✅ Collects **general system info** (hostname, kernel, uptime)  
+- ✅ Captures **CPU, memory, and load averages**  
+- ✅ Reports **disk usage, block devices, and mount points**  
+- ✅ Extracts **Volume Group (VG), Logical Volume (LV), and Physical Volume (PV)** details  
+- ✅ Includes **RAID / multipath** status if configured  
+- ✅ Logs **network configuration, routing, and listening ports**  
+- ✅ Tracks **active users, last logins, and sudoers group membership**  
+- ✅ Lists **running services** and top CPU/memory consuming processes  
+- ✅ Dumps **firewall and SELinux status**  
+- ✅ Notes **pending package updates**  
+- ✅ Saves each server’s snapshot into `/var/log/server_info/<hostname>_info_<date>.log`  
+- ✅ Runs unattended via `cron`  
+
+---
+
+## 🔹 File Locations
+By convention:  
+- Script itself:  
+  `/usr/local/bin/servers_info.sh`
+
+- Configuration file (servers to check):  
+  `/etc/linux_maint/servers.txt`
+
+- Log directory:  
+  `/var/log/server_info/`  
+
+Each server produces a separate log file:
 
 
 
