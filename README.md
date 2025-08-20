@@ -265,6 +265,73 @@ By convention:
 📌 `/etc/linux_maint/servers.txt`  
 One server per line (hostname or IP).  
 Example:
+server1
+server2
+server3
+
+
+### 2. User baseline
+📌 `/etc/linux_maint/baseline_users.txt`  
+Initial list of valid system users. Generate on a trusted server:
+```bash
+cut -d: -f1 /etc/passwd > /etc/linux_maint/baseline_users.txt
+
+3. Sudoers baseline
+
+📌 /etc/linux_maint/baseline_sudoers.txt
+Initial checksum of sudoers file:
+md5sum /etc/sudoers | awk '{print $1}' > /etc/linux_maint/baseline_sudoers.txt
+
+4. Email recipients (optional)
+📌 /etc/linux_maint/emails.txt
+One email per line:
+Alice@example.com
+Bob@example.com
+
+🔹 Usage
+Run manually
+bash /usr/local/bin/user_monitor.sh
+
+Run daily via cron
+Edit crontab:
+crontab -e
+
+Add line to run every day at midnight:
+0 0 * * * /usr/local/bin/user_monitor.sh
+
+🔹 Example Log Output
+==============================================
+ Linux Distributed User & Access Check
+ Date: 2025-08-20 00:00:01
+==============================================
+>>> User check on server1 (2025-08-20 00:00:01)
+--- New users detected: testuser
+--- Removed users: guest
+--- WARNING: Sudoers file has changed!
+--- Failed SSH logins today: 12
+----------------------------------------------
+
+>>> User check on server2 (2025-08-20 00:00:04)
+--- No new users detected
+--- No sudoers changes
+--- Failed SSH logins today: 0
+----------------------------------------------
+
+🔹 Requirements
+
+Linux system (RHEL, CentOS, Fedora, Ubuntu, Debian)
+SSH configured for passwordless login to target servers
+md5sum command available on target servers
+mail command available for email alerts (mailx or mailutils)
+
+🔹 Limitations
+
+Baseline files must be updated manually when legitimate changes occur (e.g., adding a new user).
+Failed SSH login detection is limited to the last 24h and depends on log rotation.
+Does not yet monitor user group changes (can be added later).
+
+
+
 
 
 
