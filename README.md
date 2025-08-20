@@ -13,6 +13,7 @@ Collection of useful Linux system maintenance scripts (monitoring, cleanup, auto
 - [Patch_Monitor (`patch_monitor.sh`)](#patch_monitorsh--linux-patch--reboot-monitoring-script)
 - [Cert_Monitor (`cert_monitor.sh`)](#cert_monitorsh--tls-certificate-expiry--validity-monitor)
 - [NTP_Drift_Monitor (`ntp_drift_monitor.sh`)](#ntp_drift_monitorsh--ntpchrony-time-drift-monitoring-script)
+- [Log_Growth_Guard.sh (`log_growth_guard.sh`)](#log_growth_guardsh--log-size--growth-monitoring-script)
 ---
 
 
@@ -907,4 +908,100 @@ Offset parsing uses tool outputs and may vary slightly with distro/localization.
 For systemd-timesyncd, offset is derived from LastOffsetNSec and may be ? on older versions.
 The script reports sync health; it does not attempt any time correction.
 
+# 📄 log_growth_guard.sh — Log Size & Growth Monitoring Script <a name="log_growth_guardsh--log-size--growth-monitoring-script"></a>
+
+## 🔹 Overview
+`log_growth_guard.sh` is a **Bash script** that detects **oversized** and **rapidly growing** log files.  
+It compares current sizes to the previous run, computes **growth rate (MB/hour)**, flags **WARN/CRIT** conditions, and keeps a per-host state file.  
+Run it locally or against multiple servers via SSH from a central node.
+
+---
+
+## 🔹 Features
+- ✅ Monitors **absolute size** and **growth rate** of logs  
+- ✅ Supports **multiple servers** (`servers.txt`) and **excluded hosts**  
+- ✅ Handles **globs**, **directories**, and **recursive** paths  
+- ✅ Notes when files are **rotated or truncated**  
+- ✅ Logs to `/var/log/log_growth_guard.log`  
+- ✅ Optional **email alerts** to recipients in `emails.txt`  
+- ✅ Optional (off by default) **auto-rotate command** execution  
+- ✅ Works unattended via **cron**  
+- ✅ Clean design: configuration in `/etc/linux_maint/`
+
+---
+
+## 🔹 File Locations
+By convention:  
+- Script itself:  
+  `/usr/local/bin/log_growth_guard.sh`
+
+- Configuration files:  
+  `/etc/linux_maint/servers.txt`   # list of servers  
+  `/etc/linux_maint/excluded.txt`  # optional skip list  
+  `/etc/linux_maint/log_paths.txt` # log targets (see below)  
+  `/etc/linux_maint/emails.txt`    # optional recipients  
+
+- Log file:  
+  `/var/log/log_growth_guard.log`
+
+- State files (per host):  
+  `/var/tmp/log_growth_guard.<host>.state`
+
+---
+
+## 🔹 Configuration
+
+### 1) Log targets
+📌 `/etc/linux_maint/log_paths.txt`  
+One target per line. Comments start with `#`. Supported forms:
+
+/var/log/syslog # single file
+/var/log/*.log # glob (expanded remotely)
+/opt/app/logs/ # all files (non-recursive)
+/opt/app/logs/** # recursive (all files under dir)
+
+
+### 2) Thresholds & behavior
+Inside the script:
+SIZE_WARN_MB=1024
+SIZE_CRIT_MB=2048
+RATE_WARN_MBPH=200
+RATE_CRIT_MBPH=500
+EMAIL_ON_ALERT="true"
+AUTO_ROTATE="false"        # keep false unless you know exactly what you want to run
+ROTATE_CMD=""              # e.g., 'logrotate -f /etc/logrotate.d/myapp'
+
+## 🔹 Usage
+
+### Run manually
+bash /usr/local/bin/log_growth_guard.sh
+
+Run hourly via cron (recommended)
+Edit crontab:
+crontab -e
+`0 * * * * /usr/local/bin/log_growth_guard.sh`
+
+🔹 Example Log Output
+==============================================
+ Log Growth Guard
+ Date: 2025-08-20 12:00:00
+==============================================
+===== Checking log growth on app01 =====
+[OK] /var/log/syslog size=128MB rate=0.4MB/h
+[WARN] /opt/app/logs/app.log size=1350MB rate=22.7MB/h
+[CRIT] /opt/app/logs/audit.log size=2150MB rate=610.2MB/h note=rotated_or_truncated
+[INFO] /opt/app/logs/old.log no longer present (rotated/removed)
+===== Completed app01 =====
+
+🔹 Requirements
+
+Linux targets with bash, stat, find, and standard coreutils
+SSH key-based login for distributed mode
+mail/mailx on the monitoring node (only if you want email alerts)
+
+🔹 Limitations
+
+Rate is computed between runs; the first run has no prior baseline.
+If clocks differ heavily between hosts, timestamps still rely on the monitoring node’s run time (size deltas still valid).
+Auto-rotation is disabled by default; use with care and only with a safe ROTATE_CMD.
 
