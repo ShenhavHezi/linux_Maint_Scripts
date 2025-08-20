@@ -519,7 +519,8 @@ Run daily via cron
 Edit crontab:
 crontab -e
 Add line to run every day at 2:00 AM:
-0 2 * * * /usr/local/bin/servers_info.sh
+
+`0 2 * * * /usr/local/bin/servers_info.sh`
 
 🔹 Example Log Output
 ==============================================
