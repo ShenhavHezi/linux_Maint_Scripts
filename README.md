@@ -129,7 +129,7 @@ This makes it suitable for both personal Linux machines and production environme
 ## 🔹 File Locations
 By convention:  
 - Script itself:  
-/usr/local/bin/distributed_health_monitor.sh
+/usr/local/bin/health_monitor.sh
 
 - Configuration files:  
  /etc/linux_maint/servers.txt # list of servers
@@ -171,13 +171,13 @@ alice2@example.com
 
 ### Run manually
 ```bash
-bash /usr/local/bin/distributed_health_monitor.sh
+bash /usr/local/bin/health_monitor.sh
 Run daily via cron
 
 Edit crontab:
 crontab -e
 Add line to run every day at 8:00 AM:
-0 8 * * * /usr/local/bin/distributed_health_monitor.sh
+0 8 * * * /usr/local/bin/health_monitor.sh
 
 🔹 Example Log Output
 ==============================================
@@ -219,78 +219,6 @@ Sends one email per execution with the entire report
 Does not currently monitor network statistics or service health (can be added later)
 Requires SSH key setup for multi-server environments
 
-# user_monitor.sh
-
-## Overview
-`user_monitor.sh` is a lightweight monitoring script for Linux distributed systems.  
-It helps system administrators detect unauthorized access or suspicious changes by checking:
-
-- Newly added or removed system users (`/etc/passwd`)
-- Changes in the `sudoers` configuration
-- Failed SSH login attempts from the last 24 hours
-
-The script can run locally or across multiple servers defined in a server list.
-
----
-
-## Features
-- **User monitoring**: Detects new or removed accounts by comparing against a baseline file.
-- **Sudoers integrity check**: Monitors for changes in `/etc/sudoers`.
-- **SSH failed login detection**: Reports failed login attempts from today.
-- **Centralized logging**: Logs results to `/var/log/user_monitor.log`.
-- **Multi-server support**: Runs checks across all servers listed in `servers.txt`.
-
----
-
-## Requirements
-- Linux environment with `bash`
-- SSH key-based authentication to remote servers
-- `md5sum` command available on target servers
-
----
-
-## Configuration
-Edit the following variables at the top of the script:
-
-```bash
-SERVERLIST="servers.txt"              # List of servers to check (one per line)
-BASELINE_USERS="baseline_users.txt"   # Baseline list of system users
-BASELINE_SUDOERS="baseline_sudoers.txt" # Baseline sudoers hash
-LOGFILE="/var/log/user_monitor.log"   # Log file location
-ALERT_EMAIL="admin@example.com"       # Optional email for alerts
-
-Baseline Setup
-
-Before running for the first time, initialize baselines:
-# Save current users into baseline
-cut -d: -f1 /etc/passwd > baseline_users.txt
-
-# Save sudoers hash into baseline
-md5sum /etc/sudoers | awk '{print $1}' > baseline_sudoers.txt
-
-Usage
-
-1. Add your servers to servers.txt (one hostname/IP per line).
-
-2. Run the script manually or via cron:
-./user_monitor.sh
-
-Example Output
-2025-08-20 11:00:12 - ===== Starting checks on server1 =====
-2025-08-20 11:00:13 - [server1] New users detected: testuser
-2025-08-20 11:00:14 - [server1] WARNING: Sudoers file has changed!
-2025-08-20 11:00:15 - [server1] Failed SSH logins today: 8
-2025-08-20 11:00:16 - ===== Completed checks on server1 =====
-
-Automation (Optional)
-To run daily at midnight, add to cron:
-0 0 * * * /path/to/user_monitor.sh
-
-Notes
-
-* Works on both Debian/Ubuntu (/var/log/auth.log) and RHEL/CentOS (/var/log/secure) systems.
-* If a new baseline is required (e.g., after adding a legitimate user), regenerate the baseline files.
-* Logs grow over time; consider rotating /var/log/user_monitor.log using logrotate.
 
 
 
