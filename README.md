@@ -19,6 +19,7 @@ Collection of useful Linux system maintenance scripts (monitoring, cleanup, auto
 - [NFS_mount_monitor.sh (`nfs_mount_monitor.sh`)](#nfs_mount_monitorsh--nfscifs-mount-health-monitor)
 - [Config_Drift_Monitor.sh (`config_drift_monitor.sh`)](#config_drift_monitorsh--configuration-baseline--drift-monitor)
 - [Inode_Monitor.sh (`inode_monitor.sh`)](#inode_monitorsh--inode-usage-monitoring-script)
+- [Inventory_Export.sh (`inventory_export.sh`)](#inventory_exportsh--hardwaresoftware-inventory-export-script)
 ---
 
 
@@ -1587,6 +1588,92 @@ Mountpoints with spaces are unusual; -P format minimizes issues but avoid them w
 Some minimal distros may not support df -T; script falls back gracefully without filesystem type.
 This script reports inode pressure; cleanup policies (e.g., log rotation) should be handled separately.
 
+
+
+# 📄 inventory_export.sh — Hardware/Software Inventory Export Script <a name="inventory_exportsh--hardwaresoftware-inventory-export-script"></a>
+
+## 🔹 Overview
+`inventory_export.sh` is a **Bash script** that collects a concise hardware/software inventory from one or more Linux servers and writes it to a daily **CSV** file.  
+It also saves a per-host **details snapshot** (CPU, disks, filesystems, LVM, network) for deeper troubleshooting.
+
+The script can run in two modes:
+- **Local mode** → export the server it’s running on.  
+- **Distributed mode** → export multiple servers via SSH from a central node.  
+
+---
+
+## 🔹 Features
+- ✅ Exports a **single CSV row per host** with stable fields (see below)  
+- ✅ Saves per-host **details** text file (lscpu, lsblk, df, LVM, IP, routes)  
+- ✅ Skips unavailable commands gracefully  
+- ✅ Supports **multiple servers** (`servers.txt`) and **excluded hosts** (`excluded.txt`)  
+- ✅ Logs to `/var/log/inventory_export.log`  
+- ✅ Optional email summary to recipients in `emails.txt`  
+- ✅ Works unattended via **cron**  
+- ✅ Clean design: configuration files in `/etc/linux_maint/`  
+
+---
+
+## 🔹 File Locations
+By convention:  
+- Script itself:  
+  `/usr/local/bin/inventory_export.sh`
+
+- Configuration files:  
+  `/etc/linux_maint/servers.txt`   # list of servers  
+  `/etc/linux_maint/excluded.txt`  # optional skip list  
+  `/etc/linux_maint/emails.txt`    # optional recipients  
+
+- Log file:  
+  `/var/log/inventory_export.log`
+
+- Output directory:  
+  `/var/log/inventory/`  
+  - CSV (daily): `inventory_YYYY-MM-DD.csv`  
+  - Details per host: `details/<host>_YYYY-MM-DD.txt`
+
+---
+
+## 🔹 CSV Columns
+In order:
+`date,host,fqdn,os,kernel,arch,virt,uptime,cpu_model,`
+`sockets,cores_per_socket,threads_per_core,vcpus,mem_mb,swap_mb,`
+`disk_total_gb,rootfs_use,vgs,lvs,pvs,vgs_size_gb,ip_list,default_gw,dns_servers,pkg_count`
+
+
+> `ip_list` and `dns_servers` are `;`-separated if multiple values exist.  
+> `pkg_count` is from `dpkg-query` on DEB systems or `rpm -qa | wc -l` on RPM systems.
+
+---
+
+## 🔹 Usage
+
+### Run manually
+
+bash /usr/local/bin/inventory_export.sh
+
+Run daily via cron (recommended)
+`crontab -e`
+`0 2 * * * /usr/local/bin/inventory_export.sh`
+
+🔹 Example CSV Row
+2025-08-20T12:00:21+00:00,app01,app01.example.com,Ubuntu 22.04 LTS,5.15.0-78-generic,x86_64,kvm,"up 12 days, 4 hours","Intel(R) Xeon(R) CPU",2,8,2,32,65536,8192,500,"42%",1,3,1,600,"10.0.1.10;10.0.2.10","10.0.1.1","8.8.8.8;1.1.1.1",1852
+
+
+
+🔹 Requirements
+
+Linux targets with standard tools (hostnamectl, lscpu, free, lsblk, df, ip)
+Optional: LVM tools (vgs/lvs/pvs) for VG/LV counts and total size
+SSH key-based login to targets (for distributed mode)
+mail/mailx on the monitoring node (only if you enable email summary)
+
+
+🔹 Limitations
+
+Values are a snapshot at run time; for trending, load the CSV into a DB or sheet.
+Some fields may be empty on minimal systems (e.g., no LVM, no swap).
+disk_total_gb sums physical disk devices as reported by lsblk and may not reflect SAN/thin provisioning perfectly.
 
 
 
