@@ -767,7 +767,6 @@ bob@example.com
 
 ### 3) Threshold & timeout
 Inside the script:
-```bash
 THRESHOLD_DAYS=30     # Warn when certificate has <= 30 days remaining
 TIMEOUT_SECS=10       # Per-connection timeout for openssl
 EMAIL_ON_WARN="true"  # Send email when WARN/CRIT is detected
