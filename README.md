@@ -513,7 +513,6 @@ server3
 ## 🔹 Usage
 
 ### Run manually
-```bash
 bash /usr/local/bin/servers_info.sh
 Run daily via cron
 
