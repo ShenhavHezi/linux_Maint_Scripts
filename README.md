@@ -585,11 +585,13 @@ SELinux: disabled
 
 
 🔹 Requirements
+
 Linux system (RHEL, CentOS, Fedora, Ubuntu, Debian)
 SSH configured for passwordless login to target servers (for distributed mode)
 Standard Linux tools: lscpu, lsblk, df, systemctl, ip, ss, ps, last, iptables or firewalld
 
 🔹 Limitations
+
 Does not check databases, application configs, or cron jobs by default (can be extended).
 Package update check depends on distro (apt or yum).
 AIX systems will need AIX-specific extensions (using lsvg, lslpp, etc.).
