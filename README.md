@@ -1658,7 +1658,8 @@ Run daily via cron (recommended)
 `0 2 * * * /usr/local/bin/inventory_export.sh`
 
 🔹 Example CSV Row
-2025-08-20T12:00:21+00:00,app01,app01.example.com,Ubuntu 22.04 LTS,5.15.0-78-generic,x86_64,kvm,"up 12 days, 4 hours","Intel(R) Xeon(R) CPU",2,8,2,32,65536,8192,500,"42%",1,3,1,600,"10.0.1.10;10.0.2.10","10.0.1.1","8.8.8.8;1.1.1.1",1852
+
+`2025-08-20T12:00:21+00:00,app01,app01.example.com,Ubuntu 22.04 LTS,5.15.0-78-generic,x86_64,kvm,"up 12 days, 4 hours","Intel(R) Xeon(R) CPU",2,8,2,32,65536,8192,500,"42%",1,3,1,600,"10.0.1.10;10.0.2.10","10.0.1.1","8.8.8.8;1.1.1.1",1852`
 
 
 
