@@ -14,6 +14,7 @@ Collection of useful Linux system maintenance scripts (monitoring, cleanup, auto
 - [Cert_Monitor (`cert_monitor.sh`)](#cert_monitorsh--tls-certificate-expiry--validity-monitor)
 - [NTP_Drift_Monitor (`ntp_drift_monitor.sh`)](#ntp_drift_monitorsh--ntpchrony-time-drift-monitoring-script)
 - [Log_Growth_Guard.sh (`log_growth_guard.sh`)](#log_growth_guardsh--log-size--growth-monitoring-script)
+- [Ports_Baseline_Monitor.sh (`ports_baseline_monitor.sh`)](#ports_baseline_monitorsh--listening-ports-baseline--drift-monitor)
 ---
 
 
@@ -1015,4 +1016,130 @@ mail/mailx on the monitoring node (only if you want email alerts)
 Rate is computed between runs; the first run has no prior baseline.
 If clocks differ heavily between hosts, timestamps still rely on the monitoring node’s run time (size deltas still valid).
 Auto-rotation is disabled by default; use with care and only with a safe ROTATE_CMD.
+
+# 📄 ports_baseline_monitor.sh — Listening Ports Baseline & Drift Monitor <a name="ports_baseline_monitorsh--listening-ports-baseline--drift-monitor"></a>
+
+## 🔹 Overview
+`ports_baseline_monitor.sh` is a **Bash script** that detects changes in listening network ports by comparing the current state to a saved **baseline** per host.  
+It normalizes sockets to `proto|port|process`, highlights **NEW** and **REMOVED** listeners, applies an **allowlist** for known/expected additions, logs the results, and can email alerts.
+
+The script can run in two modes:
+- **Local mode** → check the server it’s running on.  
+- **Distributed mode** → check multiple servers via SSH from a central master node.
+
+---
+
+## 🔹 Features
+- ✅ Captures listening ports via `ss` (with process names when available)  
+- ✅ Falls back to `netstat` when needed  
+- ✅ Per-host **baseline** in `/etc/linux_maint/baselines/ports/<host>.baseline`  
+- ✅ Flags **NEW** and **REMOVED** entries  
+- ✅ **Allowlist** support (`proto:port` or `proto:port:proc-substring`)  
+- ✅ Logs to `/var/log/ports_baseline_monitor.log`  
+- ✅ Optional automatic **baseline initialization** and **baseline updates**  
+- ✅ Optional **email alerts** to recipients in `emails.txt`  
+- ✅ Works unattended via **cron**  
+- ✅ Clean design: configuration files in `/etc/linux_maint/`  
+
+---
+
+## 🔹 File Locations
+By convention:  
+- Script itself:  
+  `/usr/local/bin/ports_baseline_monitor.sh`
+
+- Configuration files:  
+  `/etc/linux_maint/servers.txt`                   # list of servers  
+  `/etc/linux_maint/excluded.txt`                  # optional skip list  
+  `/etc/linux_maint/baselines/ports/<host>.baseline`  # per-host baseline  
+  `/etc/linux_maint/ports_allowlist.txt`           # optional allowlist  
+  `/etc/linux_maint/emails.txt`                    # optional recipients  
+
+- Log file:  
+  `/var/log/ports_baseline_monitor.log`
+
+---
+
+## 🔹 Baseline Format
+Each line is normalized as:
+proto|port|process
+
+Examples:
+tcp|22|sshd
+udp|123|chronyd
+tcp|5432|postgres
+
+> If the process name isn’t available, `-` is used. Run the script with sufficient privileges for best results.
+
+---
+
+## 🔹 Allowlist Format
+One rule per line; comments start with `#`.  
+- `proto:port` — ignore any new listener on that `proto/port`.  
+- `proto:port:proc-substring` — ignore only if the process name contains the substring (case-insensitive).  
+Examples:
+Common allowances
+tcp:22:sshd
+udp:123:chrony
+tcp:9100:node_exporter
+tcp:8443
+
+
+---
+
+## 🔹 Configuration
+Inside the script:
+SERVERLIST="/etc/linux_maint/servers.txt"
+EXCLUDED="/etc/linux_maint/excluded.txt"
+BASELINE_DIR="/etc/linux_maint/baselines/ports"
+ALLOWLIST_FILE="/etc/linux_maint/ports_allowlist.txt"
+ALERT_EMAILS="/etc/linux_maint/emails.txt"
+LOGFILE="/var/log/ports_baseline_monitor.log"
+
+AUTO_BASELINE_INIT="true"   # create baseline if missing
+BASELINE_UPDATE="false"     # accept current as new baseline after reporting
+INCLUDE_PROCESS="true"      # include process names when available
+EMAIL_ON_CHANGE="true"      # send email on changes
+
+## 🔹 Usage
+
+### Run manually
+bash /usr/local/bin/ports_baseline_monitor.sh
+
+Run hourly via cron (recommended)
+Edit crontab:
+crontab -e
+`0 * * * * /usr/local/bin/ports_baseline_monitor.sh`
+
+🔹 Example Log Output
+==============================================
+ Ports Baseline Monitor
+ Date: 2025-08-20 12:00:00
+==============================================
+===== Checking ports on app01 =====
+[app01] NEW listening entries:
+  + tcp/9100 (node_exporter)
+  + tcp/8443 (-)
+[app01] REMOVED listening entries:
+  - tcp/5601 (kibana)
+===== Completed app01 =====
+
+===== Checking ports on db01 =====
+[db01] NEW listening entries:
+  + tcp/5432 (postgres)
+===== Completed db01 =====
+
+🔹 Requirements
+
+Linux targets with ss (iproute2). If ss is not available, netstat as fallback.
+Root privileges recommended to capture process names for listeners.
+SSH key-based login for distributed mode.
+mail/mailx on the monitoring node (only if you want email alerts).
+
+🔹 Limitations
+
+Process names may be - if permissions are insufficient or the tool can’t resolve PIDs.
+Some daemons spawn short-lived listeners; frequent intervals reduce false negatives.
+Baseline management: set BASELINE_UPDATE="true" temporarily to accept legitimate changes after a rollout.
+
 
