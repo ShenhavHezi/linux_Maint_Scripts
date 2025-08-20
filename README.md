@@ -272,11 +272,13 @@ server3
 ### 2. User baseline
 📌 `/etc/linux_maint/baseline_users.txt` 
 Initial list of valid system users. Generate on a trusted server:
+
 cut -d: -f1 /etc/passwd > /etc/linux_maint/baseline_users.txt
 
 ### 3. Sudoers baseline
 📌 `/etc/linux_maint/baseline_sudoers.txt`
 Initial checksum of sudoers file:
+
 md5sum /etc/sudoers | awk '{print $1}' > /etc/linux_maint/baseline_sudoers.txt
 
 ### 4. Email recipients (optional)
