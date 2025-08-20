@@ -331,7 +331,7 @@ Failed SSH login detection is limited to the last 24h and depends on log rotatio
 Does not yet monitor user group changes (can be added later).
 
 
-📄 service_monitor.sh — Linux Service Monitoring Script <a name="service_monitorsh--linux-service-monitoring-script"></a>
+# 📄 service_monitor.sh — Linux Service Monitoring Script <a name="service_monitorsh--linux-service-monitoring-script"></a>
 
 ## 🔹 Overview
 `service_monitor.sh` is a **Bash script** designed to monitor the status of critical services on one or more Linux servers.  
