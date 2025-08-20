@@ -1654,6 +1654,7 @@ bash /usr/local/bin/inventory_export.sh
 
 Run daily via cron (recommended)
 `crontab -e`
+
 `0 2 * * * /usr/local/bin/inventory_export.sh`
 
 🔹 Example CSV Row
