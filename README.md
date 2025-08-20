@@ -217,7 +217,7 @@ Sends one email per execution with the entire report
 Does not currently monitor network statistics or service health (can be added later)
 Requires SSH key setup for multi-server environments
 
-📄 user_monitor.sh — Linux User & Access Monitoring Script <a name="user_monitorsh--linux-user--access-monitoring-script"></a>
+# 📄 user_monitor.sh — Linux User & Access Monitoring Script <a name="user_monitorsh--linux-user--access-monitoring-script"></a>
 
 ## 🔹 Overview
 `user_monitor.sh` is a **Bash script** designed to monitor user accounts and SSH access activity across one or more Linux servers.  
