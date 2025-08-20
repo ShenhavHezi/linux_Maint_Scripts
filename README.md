@@ -20,6 +20,7 @@ Collection of useful Linux system maintenance scripts (monitoring, cleanup, auto
 - [Config_Drift_Monitor.sh (`config_drift_monitor.sh`)](#config_drift_monitorsh--configuration-baseline--drift-monitor)
 - [Inode_Monitor.sh (`inode_monitor.sh`)](#inode_monitorsh--inode-usage-monitoring-script)
 - [Inventory_Export.sh (`inventory_export.sh`)](#inventory_exportsh--hardwaresoftware-inventory-export-script)
+- [Network_Monitor.sh (`network_monitor.sh`)](#network_monitorsh--ping--tcp--http-network-monitor)
 ---
 
 
@@ -1676,6 +1677,113 @@ mail/mailx on the monitoring node (only if you enable email summary)
 Values are a snapshot at run time; for trending, load the CSV into a DB or sheet.
 Some fields may be empty on minimal systems (e.g., no LVM, no swap).
 disk_total_gb sums physical disk devices as reported by lsblk and may not reflect SAN/thin provisioning perfectly.
+
+
+
+# 📄 network_monitor.sh — Ping / TCP / HTTP Network Monitor <a name="network_monitorsh--ping--tcp--http-network-monitor"></a>
+
+## 🔹 Overview
+`network_monitor.sh` is a **Bash script** that runs lightweight network checks from one or many servers.  
+It supports **ICMP ping**, **TCP port connect**, and **HTTP/HTTPS** checks with latency thresholds, and reports **OK / WARN / CRIT**.
+
+The script can run in two modes:
+- **Local mode** → run checks from the server it’s on.  
+- **Distributed mode** → run the same checks **from each server** via SSH (great to test per-datacenter connectivity).
+
+---
+
+## 🔹 Features
+- ✅ `ping` → packet loss & average RTT thresholds  
+- ✅ `tcp` → port reachability & connect latency (`/dev/tcp`, fallback `nc`)  
+- ✅ `http(s)` → status code match & total request time via `curl`  
+- ✅ Host-scoped checks via `network_targets.txt` (per-host or `*` for all)  
+- ✅ Logs to `/var/log/network_monitor.log`  
+- ✅ Optional email alerts (`emails.txt`)  
+- ✅ Works unattended via **cron**  
+- ✅ Clean design: configuration in `/etc/linux_maint/`
+
+---
+
+## 🔹 File Locations
+By convention:  
+- Script itself:  
+  `/usr/local/bin/network_monitor.sh`
+
+- Configuration files:  
+  `/etc/linux_maint/servers.txt`        # list of servers  
+  `/etc/linux_maint/excluded.txt`       # optional skip list  
+  `/etc/linux_maint/network_targets.txt`# checks to run (see below)  
+  `/etc/linux_maint/emails.txt`         # optional recipients  
+
+- Log file:  
+  `/var/log/network_monitor.log`
+
+---
+
+## 🔹 Targets Configuration (`/etc/linux_maint/network_targets.txt`)
+**CSV**:  
+`host,check,target,key=value,key=value,...`
+
+- `host` — hostname/IP from `servers.txt` or `*` for all hosts  
+- `check` — `ping` | `tcp` | `http` (or `https`)  
+- `target`  
+  - `ping`: hostname or IP  
+  - `tcp`: `host:port`  
+  - `http(s)`: full URL (e.g., `https://example.com/health`)  
+- optional `key=value` params override defaults (below)
+
+**Examples**
+`*,ping,1.1.1.1,count=3,timeout=3,loss_warn=20,loss_crit=50,rtt_warn_ms=150,rtt_crit_ms=500`
+`*,tcp,db01.internal:5432,timeout=3,latency_warn_ms=300,latency_crit_ms=1000`
+`*,http,https://example.com/health,expect=200-299,timeout=5,latency_warn_ms=800,latency_crit_ms=2000`
+`web01,http,http://localhost:8080/ready,expect=200,timeout=3`
+`app01,tcp,redis.internal:6379,timeout=2,latency_warn_ms=100,latency_crit_ms=500`
+
+
+### Default thresholds (can be overridden per check)
+- **ping**: `count=3`, `timeout=3s`, `loss_warn=20%`, `loss_crit=50%`, `rtt_warn_ms=150`, `rtt_crit_ms=500`  
+- **tcp**: `timeout=3s`, `latency_warn_ms=300`, `latency_crit_ms=1000`  
+- **http**: `timeout=5s`, `latency_warn_ms=800`, `latency_crit_ms=2000`, `expect=200–399` if not specified  
+  - Custom `expect` supports: `200`, `200,301,302`, `200-299`, or `2xx`
+
+---
+
+## 🔹 Usage
+
+### Run manually
+bash /usr/local/bin/network_monitor.sh
+Run every 5 minutes via cron (example)
+
+`crontab -e`
+
+`*/5 * * * * /usr/local/bin/network_monitor.sh`
+
+🔹 Example Log Output
+==============================================
+ Network Monitor
+ Date: 2025-08-20 12:00:00
+==============================================
+===== Network checks from app01 =====
+[app01] [OK] ping 1.1.1.1 loss=0% avg=12ms
+[app01] [WARN] tcp db01.internal:5432 conn_ms=420 note=lat_ge_300ms
+[app01] [CRIT] http https://example.com/health code=503 ms=120 note=bad_status:503
+===== Completed app01 =====
+
+
+
+🔹 Requirements
+
+Linux targets with bash, ping, and (for http) curl
+For TCP fallback: nc (netcat) recommended if /dev/tcp timing is unavailable
+SSH key-based login for distributed mode
+mail/mailx on the monitoring node (only if you want email alerts)
+
+
+🔹 Limitations
+
+ICMP ping may require setuid or capabilities depending on distro; if ping is restricted, results may show tool failure.
+TCP latency via /dev/tcp is a simple connect timing; it does not include TLS handshakes (use http for full request timing).
+http check validates only status code and total time; extend to match response bodies if needed.
 
 
 
