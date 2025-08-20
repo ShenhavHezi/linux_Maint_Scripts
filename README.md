@@ -1316,8 +1316,11 @@ files1,/mnt/smb,cifs,//filesrv/shared,credentials=/root/.smbcred,ro,8
 ## 🔹 Configuration (inside script)
 
 `EMAIL_ON_FAILURE="true"`
+
 `AUTO_REMOUNT="false"             # change to "true" to allow auto (re)mount`
+
 `UMOUNT_FLAGS="-fl"               # tune for your environment`
+
 `DEFAULT_TIMEOUT=8`
 
 🔹 Usage
