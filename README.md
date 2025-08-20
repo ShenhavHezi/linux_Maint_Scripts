@@ -492,7 +492,106 @@ By convention:
   `/var/log/server_info/`  
 
 Each server produces a separate log file:
+`/var/log/server_info/server1_info_2025-08-20.log`
+`/var/log/server_info/server2_info_2025-08-20.log`
 
+---
+
+## 🔹 Configuration
+
+### 1. Server list
+📌 `/etc/linux_maint/servers.txt`  
+One server per line (hostname or IP).  
+Example:
+server1
+server2
+server3
+
+
+---
+
+## 🔹 Usage
+
+### Run manually
+```bash
+bash /usr/local/bin/servers_info.sh
+Run daily via cron
+
+Edit crontab:
+crontab -e
+Add line to run every day at 2:00 AM:
+0 2 * * * /usr/local/bin/servers_info.sh
+
+🔹 Example Log Output
+==============================================
+ Linux Server Information Report
+ Date: 2025-08-20
+ Host: server1
+==============================================
+
+>>> GENERAL SYSTEM INFO
+Hostname: server1
+OS: Ubuntu 22.04 LTS
+Kernel: 5.15.0-78-generic
+Uptime: up 12 days, 4 hours
+
+>>> CPU & MEMORY
+Model name: Intel(R) Xeon(R) CPU E5-2670 v3 @ 2.30GHz
+CPU(s): 8
+Memory:
+              total   used   free   shared  buff/cache   available
+Mem:           32G    15G    10G      1G        7G         20G
+Load Average: 0.42 0.38 0.36
+
+>>> DISK & FILESYSTEMS
+Filesystem   Size   Used   Avail  Use%  Mounted on
+/dev/sda1     50G    20G    28G   42%   /
+
+>>> VOLUME GROUPS
+VG   #PV #LV #SN Attr   VSize   VFree
+vg0    1   3   0 wz--n-  500G   100G
+
+>>> NETWORK CONFIGURATION
+inet 192.168.1.10/24 scope global eth0
+Default route: via 192.168.1.1 dev eth0
+Listening Ports:
+tcp   0   0 0.0.0.0:22   0.0.0.0:*   LISTEN   (sshd)
+tcp   0   0 0.0.0.0:5432 0.0.0.0:*   LISTEN   (postgres)
+
+>>> USERS & ACCESS
+Logged in users:
+root     pts/0  2025-08-20 12:05 (192.168.1.100)
+Recent logins:
+user1 pts/1 Mon Aug 19 15:21 still logged in
+Sudo group: user1, admin
+
+>>> SERVICES & PROCESSES
+Active services: sshd, cron, systemd-journald, ...
+Top 5 processes by memory:
+PID  CMD       %MEM %CPU
+1234 java      8.0  15.2
+...
+
+>>> SECURITY
+Firewall: 3 rules configured
+SELinux: disabled
+
+>>> PACKAGE UPDATES
+3 packages can be upgraded:
+- openssl
+- bash
+- libc6
+
+
+🔹 Requirements
+Linux system (RHEL, CentOS, Fedora, Ubuntu, Debian)
+SSH configured for passwordless login to target servers (for distributed mode)
+Standard Linux tools: lscpu, lsblk, df, systemctl, ip, ss, ps, last, iptables or firewalld
+
+🔹 Limitations
+Does not check databases, application configs, or cron jobs by default (can be extended).
+Package update check depends on distro (apt or yum).
+AIX systems will need AIX-specific extensions (using lsvg, lslpp, etc.).
 
 
 
