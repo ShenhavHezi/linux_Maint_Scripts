@@ -1090,17 +1090,17 @@ tcp:8443
 ## 🔹 Configuration
 Inside the script:
 
-SERVERLIST="/etc/linux_maint/servers.txt"
-EXCLUDED="/etc/linux_maint/excluded.txt"
-BASELINE_DIR="/etc/linux_maint/baselines/ports"
-ALLOWLIST_FILE="/etc/linux_maint/ports_allowlist.txt"
-ALERT_EMAILS="/etc/linux_maint/emails.txt"
-LOGFILE="/var/log/ports_baseline_monitor.log"
+`SERVERLIST="/etc/linux_maint/servers.txt"`
+`EXCLUDED="/etc/linux_maint/excluded.txt"`
+`BASELINE_DIR="/etc/linux_maint/baselines/ports"`
+`ALLOWLIST_FILE="/etc/linux_maint/ports_allowlist.txt"`
+`ALERT_EMAILS="/etc/linux_maint/emails.txt"`
+`LOGFILE="/var/log/ports_baseline_monitor.log"`
 
-AUTO_BASELINE_INIT="true"   # create baseline if missing
-BASELINE_UPDATE="false"     # accept current as new baseline after reporting
-INCLUDE_PROCESS="true"      # include process names when available
-EMAIL_ON_CHANGE="true"      # send email on changes
+`AUTO_BASELINE_INIT="true"   # create baseline if missing`
+`BASELINE_UPDATE="false"     # accept current as new baseline after reporting`
+`INCLUDE_PROCESS="true"      # include process names when available`
+`EMAIL_ON_CHANGE="true"      # send email on changes`
 
 ## 🔹 Usage
 
