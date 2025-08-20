@@ -11,6 +11,7 @@ Collection of useful Linux system maintenance scripts (monitoring, cleanup, auto
 - [Service_Monitor (`service_monitor.sh`)](#service_monitorsh--linux-service-monitoring-script)
 - [Servers_Info (`servers_info.sh`)](#servers_infosh--linux-server-information-snapshot-script)
 - [Patch_Monitor (`patch_monitor.sh`)](#patch_monitorsh--linux-patch--reboot-monitoring-script)
+- [Cert_Monitor (`cert_monitor.sh`)](#cert_monitorsh--tls-certificate-expiry--validity-monitor)
 ---
 
 
@@ -705,7 +706,105 @@ Reboot detection is best-effort on RPM/SUSE systems when needs-restarting is mis
 The script does not apply updates; it only reports. (Can be extended with a safe window + approval flow.)
 
 
+# 📄 cert_monitor.sh — TLS Certificate Expiry & Validity Monitor <a name="cert_monitorsh--tls-certificate-expiry--validity-monitor"></a>
+
+## 🔹 Overview
+`cert_monitor.sh` is a **Bash script** that checks TLS certificates for one or more endpoints and alerts you before they expire.  
+It supports plain TLS (e.g., HTTPS on 443) and **STARTTLS** for common services, validates the certificate with OpenSSL, and reports the **days remaining**, **issuer/subject**, and **verify status**.
+
+The script runs from a central server — no SSH needed to targets — and is ideal for monitoring public and internal services.
+
+---
+
+## 🔹 Features
+- ✅ Checks any `host:port` that speaks TLS (default port 443)  
+- ✅ Optional **SNI** override per target  
+- ✅ Optional **STARTTLS** (e.g., `smtp`, `imap`, `pop3`, `ldap`, `ftp`, `postgres`)  
+- ✅ Reports **days-until-expiry**, **verify status**, **issuer**, **subject**  
+- ✅ Logs results to `/var/log/cert_monitor.log`  
+- ✅ Optional email alerts via recipients in `emails.txt`  
+- ✅ Works unattended via **cron**  
+- ✅ Clean design: configuration files in `/etc/linux_maint/`  
+
+---
+
+## 🔹 File Locations
+By convention:  
+- Script itself:  
+  `/usr/local/bin/cert_monitor.sh`
+
+- Configuration files:  
+  `/etc/linux_maint/certs.txt`   # endpoints to check  
+  `/etc/linux_maint/emails.txt`  # email recipients (optional)  
+
+- Log file:  
+  `/var/log/cert_monitor.log`
+
+---
+
+## 🔹 Configuration
+
+### 1) Targets list
+📌 `/etc/linux_maint/certs.txt`  
+One endpoint per line, supports optional SNI and STARTTLS.  
+Format:
+host[:port][,sni][,starttls=proto]
+Examples:
+example.com # implies :443, SNI=example.com
+example.com:443 # explicit 443
+internal.example:8443 # custom port, SNI=internal.example
+db.myco.lan:5432,myapp.lan # custom SNI for TLS on 5432
+mail.example.com:25,starttls=smtp
+imap.example.com:143,starttls=imap
 
 
+### 2) Email recipients (optional)
+📌 `/etc/linux_maint/emails.txt`  
+One email per line:
+alice@example.com
+bob@example.com
+
+
+### 3) Threshold & timeout
+Inside the script:
+```bash
+THRESHOLD_DAYS=30     # Warn when certificate has <= 30 days remaining
+TIMEOUT_SECS=10       # Per-connection timeout for openssl
+EMAIL_ON_WARN="true"  # Send email when WARN/CRIT is detected
+
+## 🔹 Usage
+
+### Run manually
+bash /usr/local/bin/cert_monitor.sh
+Run daily via cron
+
+Edit crontab:
+crontab -e
+Add line to run every day at 3:00 AM:
+
+`0 3 * * * /usr/local/bin/cert_monitor.sh`
+
+🔹 Example Log Output
+==============================================
+ TLS Certificate Check
+ Date: 2025-08-20 01:00:01
+==============================================
+[OK] example.com:443 (SNI=example.com) days_left=82 verify=0/ok
+[WARN] internal.example:8443 (SNI=internal.example) days_left=14 verify=0/ok note=near_expiry
+[CRIT] legacy.example:443 (SNI=legacy.example) days_left=-3 verify=10/certificate has expired note=expired
+[WARN] mail.example.com:25 (SNI=mail.example.com) days_left=28 verify=0/ok note=near_expiry
+
+
+🔹 Requirements
+
+Linux host with openssl, timeout, mail/mailx (mail optional)
+Network access from the monitoring host to the listed endpoints
+For STARTTLS, OpenSSL must support the given protocol name (e.g., -starttls smtp)
+
+🔹 Limitations
+
+OpenSSL verification uses system trust; custom/private CAs may show non-zero verify codes unless installed in system trust store.
+Date parsing relies on GNU date. On non-GNU systems, adjust the parsing or install coreutils.
+This script checks endpoint certificates, not files on disk (e.g., local PEMs/keystores).
 
 
