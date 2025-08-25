@@ -1,75 +1,144 @@
 #!/bin/bash
 # service_monitor.sh - Monitor critical services across multiple servers
 # Author: Shenhav_Hezi
-# Version: 1.0
+# Version: 2.0 (refactored to use linux_maint.sh)
 # Description:
-#   Checks status of system services (sshd, cron, nginx, etc.)
-#   across multiple Linux servers. Logs results and alerts if
-#   any service is inactive or failed. Optionally restarts services.
+#   Checks status of system services (sshd, cron, nginx, etc.) across servers.
+#   Logs results and alerts if any service is inactive/failed. Optional auto-restart.
+
+# ===== Shared helpers =====
+. /usr/local/lib/linux_maint.sh || { echo "Missing /usr/local/lib/linux_maint.sh"; exit 1; }
+LM_PREFIX="[service_monitor] "
+LM_LOGFILE="/var/log/service_monitor.log"
+: "${LM_MAX_PARALLEL:=0}"     # 0 = sequential hosts; set >0 to run hosts in parallel
+: "${LM_EMAIL_ENABLED:=true}" # master toggle for lm_mail
+
+lm_require_singleton "service_monitor"
 
 # ========================
-# Configuration Variables
+# Script configuration
 # ========================
-SERVERLIST="/etc/linux_maint/servers.txt"   # List of servers
-SERVICES="/etc/linux_maint/services.txt"    # List of services to check
-LOGFILE="/var/log/service_monitor.log"      # Log file
-ALERT_EMAILS="/etc/linux_maint/emails.txt"  # Email recipients (optional)
-AUTO_RESTART="false"                        # Set to "true" to auto-restart failed services
+SERVICES="/etc/linux_maint/services.txt"     # One service per line (unit name). Comments (#…) and blanks allowed.
+AUTO_RESTART="false"                          # "true" to attempt restart on failure (requires root or sudo NOPASSWD)
+MAIL_SUBJECT_PREFIX='[Service Monitor]'
+EMAIL_ON_ALERT="false"                        # "true" to email when any service is not active
 
 # ========================
-# Helper Functions
+# Helpers (script-local)
 # ========================
+ALERTS_FILE="$(mktemp -p "${LM_STATE_DIR:-/var/tmp}" service_monitor.alerts.XXXXXX)"
+append_alert(){ echo "$1" >> "$ALERTS_FILE"; }
 
-log_message() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOGFILE"
+list_services(){
+  [ -s "$SERVICES" ] || { lm_err "Services file not found or empty: $SERVICES"; echo ""; return 1; }
+  grep -v '^[[:space:]]*#' "$SERVICES" | sed '/^[[:space:]]*$/d'
 }
 
-check_service() {
-    local HOST=$1
-    local SERVICE=$2
+mail_if_enabled(){
+  [ "$EMAIL_ON_ALERT" = "true" ] || return 0
+  lm_mail "$1" "$2"
+}
 
-    STATUS=$(ssh -o BatchMode=yes -o ConnectTimeout=5 "$HOST" \
-        "systemctl is-active $SERVICE 2>/dev/null || service $SERVICE status 2>/dev/null | grep -q 'running' && echo running")
+# Returns "status|enabled", where status is one of: active,running,inactive,failed,unknown
+query_service_status(){
+  local host="$1" svc="$2"
+  lm_ssh "$host" bash -lc "
+set -o pipefail
+if command -v systemctl >/dev/null 2>&1; then
+  st=\$(systemctl is-active '$svc' 2>/dev/null || true)
+  en=\$(systemctl is-enabled '$svc' 2>/dev/null || echo '?')
+  echo \"\${st:-unknown}|\${en}\"
+elif command -v service >/dev/null 2>&1; then
+  out=\$(service '$svc' status 2>/dev/null || true)
+  if echo \"\$out\" | grep -qi 'running'; then echo 'running|?'; 
+  elif echo \"\$out\" | grep -qi 'stopped\\|dead\\|not running'; then echo 'inactive|?';
+  else echo 'unknown|?'; fi
+else
+  echo 'unknown|?'
+fi"
+}
 
-    if [[ "$STATUS" == "active" || "$STATUS" == "running" ]]; then
-        log_message "[$HOST] [OK] $SERVICE is active"
-    else
-        log_message "[$HOST] [FAIL] $SERVICE is NOT active"
-        if [ "$AUTO_RESTART" == "true" ]; then
-            ssh "$HOST" "systemctl restart $SERVICE 2>/dev/null || service $SERVICE restart 2>/dev/null"
-            log_message "[$HOST] Attempted restart of $SERVICE"
+restart_service(){
+  local host="$1" svc="$2"
+  lm_ssh "$host" bash -lc "
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl restart '$svc' 2>/dev/null || sudo -n systemctl restart '$svc' 2>/dev/null || \
+  service '$svc' restart 2>/dev/null || sudo -n service '$svc' restart 2>/dev/null
+else
+  service '$svc' restart 2>/dev/null || sudo -n service '$svc' restart 2>/dev/null
+fi"
+}
+
+# ========================
+# Per-host runner
+# ========================
+run_for_host(){
+  local host="$1"
+  lm_info "===== Starting service checks on $host ====="
+
+  if ! lm_reachable "$host"; then
+    lm_err "[$host] SSH unreachable"
+    append_alert "$host|ssh|unreachable"
+    lm_info "===== Completed $host ====="
+    return
+  fi
+
+  local svc
+  while IFS= read -r svc; do
+    [ -z "$svc" ] && continue
+
+    local st en
+    IFS='|' read -r st en <<<"$(query_service_status "$host" "$svc")"
+
+    case "$st" in
+      active|running)
+        lm_info "[$host] [OK] $svc active (enabled=$en)"
+        ;;
+      *)
+        lm_err  "[$host] [FAIL] $svc status=$st (enabled=$en)"
+        append_alert "$host|$svc|$st"
+        if [ "$AUTO_RESTART" = "true" ]; then
+          lm_info "[$host] attempting restart: $svc"
+          restart_service "$host" "$svc"
+          # Re-check
+          IFS='|' read -r st en <<<"$(query_service_status "$host" "$svc")"
+          if [[ "$st" = "active" || "$st" = "running" ]]; then
+            lm_info "[$host] [RECOVERED] $svc is now $st"
+          else
+            lm_err  "[$host] [STILL DOWN] $svc status=$st after restart attempt"
+          fi
         fi
-    fi
-}
+        ;;
+    esac
+  done < <(list_services)
 
-check_server() {
-    local HOST=$1
-    log_message "===== Starting service checks on $HOST ====="
-
-    for SERVICE in $(cat "$SERVICES"); do
-        check_service "$HOST" "$SERVICE"
-    done
-
-    log_message "===== Completed service checks on $HOST ====="
+  lm_info "===== Completed $host ====="
 }
 
 # ========================
-# Main Execution
+# Main
 # ========================
-log_message "=== Service Monitor Script Started ==="
-
-if [ ! -f "$SERVERLIST" ]; then
-    log_message "ERROR: Server list file $SERVERLIST not found!"
-    exit 1
+if ! [ -s "$SERVICES" ]; then
+  lm_err "Services file missing or empty: $SERVICES"
+  exit 1
 fi
 
-if [ ! -f "$SERVICES" ]; then
-    log_message "ERROR: Services file $SERVICES not found!"
-    exit 1
+lm_info "=== Service Monitor Script Started ==="
+lm_for_each_host run_for_host
+
+alerts="$(cat "$ALERTS_FILE" 2>/dev/null)"
+rm -f "$ALERTS_FILE" 2>/dev/null || true
+
+if [ -n "$alerts" ]; then
+  subject="Service failures detected"
+  body="One or more services are not active:
+
+Host | Service | Status
+-----------------------
+$(echo "$alerts" | awk -F'|' 'NF>=3{printf "%s | %s | %s\n",$1,$2,$3}') 
+
+AUTO_RESTART=${AUTO_RESTART}"
+  mail_if_enabled "$MAIL_SUBJECT_PREFIX $subject" "$body"
 fi
 
-for SERVER in $(cat "$SERVERLIST"); do
-    check_server "$SERVER"
-done
-
-log_message "=== Service Monitor Script Finished ==="
+lm_info "=== Service Monitor Script Finished ==="
