@@ -16,18 +16,18 @@ A curated set of lightweight Bash tools for day-to-day Linux ops: monitoring, in
 - [User_Monitor (`user_monitor.sh`)](#user--monitor)
 - [Service_Monitor (`service_monitor.sh`)](#service--monitor)
 - [Servers_Info (`servers_info.sh`)](#servers--info)
-- [Patch_Monitor (`patch_monitor.sh`)](#patch_monitorsh--linux-patch--reboot-monitoring-script)
-- [Cert_Monitor (`cert_monitor.sh`)](#cert_monitorsh--tls-certificate-expiry--validity-monitor)
-- [NTP_Drift_Monitor (`ntp_drift_monitor.sh`)](#ntp_drift_monitorsh--ntpchrony-time-drift-monitoring-script)
-- [Log_Growth_Guard.sh (`log_growth_guard.sh`)](#log_growth_guardsh--log-size--growth-monitoring-script)
-- [Ports_Baseline_Monitor.sh (`ports_baseline_monitor.sh`)](#ports_baseline_monitorsh--listening-ports-baseline--drift-monitor)
-- [Backup_Check.sh (`backup_check.sh`)](#backup_checksh--backup-freshness-size--integrity-monitor)
-- [NFS_mount_monitor.sh (`nfs_mount_monitor.sh`)](#nfs_mount_monitorsh--nfscifs-mount-health-monitor)
-- [Config_Drift_Monitor.sh (`config_drift_monitor.sh`)](#config_drift_monitorsh--configuration-baseline--drift-monitor)
-- [Inode_Monitor.sh (`inode_monitor.sh`)](#inode_monitorsh--inode-usage-monitoring-script)
-- [Inventory_Export.sh (`inventory_export.sh`)](#inventory_exportsh--hardwaresoftware-inventory-export-script)
-- [Network_Monitor.sh (`network_monitor.sh`)](#network_monitorsh--ping--tcp--http-network-monitor)
-- [Process_Hog_Monitor.sh (`process_hog_monitor.sh`)](#process_hog_monitorsh--sustained-cpuram-process-monitor)
+- [Patch_Monitor (`patch_monitor.sh`)](#patch--monitor)
+- [Cert_Monitor (`cert_monitor.sh`)](#cert--monitor)
+- [NTP_Drift_Monitor (`ntp_drift_monitor.sh`)](#ntp--drift--monitor)
+- [Log_Growth_Guard.sh (`log_growth_guard.sh`)](#log--growth--guard)
+- [Ports_Baseline_Monitor.sh (`ports_baseline_monitor.sh`)](#ports--baseline--monitor)
+- [Backup_Check.sh (`backup_check.sh`)](#backup--check)
+- [NFS_mount_monitor.sh (`nfs_mount_monitor.sh`)](#nfs--mount--monitor)
+- [Config_Drift_Monitor.sh (`config_drift_monitor.sh`)](#config--drift--monitor)
+- [Inode_Monitor.sh (`inode_monitor.sh`)](#inode--monitor)
+- [Inventory_Export.sh (`inventory_export.sh`)](#inventory--export)
+- [Network_Monitor.sh (`network_monitor.sh`)](#network--monitor)
+- [Process_Hog_Monitor.sh (`process_hog_monitor.sh`)](#process--hog--monitor)
 ---
 
 
@@ -224,7 +224,323 @@ Update baselines when legitimate changes occur.
 **Cron:** `0 2 * * * /usr/local/bin/servers_info.sh`
 
 
+## 📄 patch_monitor.sh — Updates & Reboot <a name="patch--monitor"></a>
 
+**What it does:** Counts total/security/kernel updates and detects reboot-required (best-effort per distro).
+
+**Managers:** apt, dnf, yum, zypper
+
+#### Config: 
+`/etc/linux_maint/servers.txt` 
+
+`/etc/linux_maint/excluded.txt`
+
+`/etc/linux_maint/emails.txt`
+
+**Log:** `/var/log/patch_monitor.log`
+
+**Cron:** `0 3 * * * /usr/local/bin/patch_monitor.sh`
+
+
+
+## 📄 cert_monitor.sh — TLS Expiry & Validity <a name="cert--monitor"></a>
+
+**What it does:** Checks endpoints (host[:port][,sni][,starttls=proto]), parses leaf cert, days remaining, and OpenSSL verify code.
+
+#### Config: 
+`/etc/linux_maint/certs.txt`
+
+`/etc/linux_maint/emails.txt`
+
+`THRESHOLD_DAYS=30`
+
+`TIMEOUT_SECS=10`
+
+`EMAIL_ON_WARN="true"`
+
+**Log:**
+`/var/log/cert_monitor.log`
+
+**Cron:** `0 1 * * * /usr/local/bin/cert_monitor.sh`
+
+
+## 📄 ntp_drift_monitor.sh — Time Sync & Drift <a name="ntp--drift--monitor"></a>
+
+**What it does:** Supports chrony, ntpd, systemd-timesyncd. Reports offset(ms), stratum, source, sync status.
+Refactored to use `linux_maint.sh` with parallelism and aggregated email.
+
+#### Config: 
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt`
+
+`/etc/linux_maint/emails.txt`
+
+`OFFSET_WARN_MS=100`
+
+`OFFSET_CRIT_MS=500`
+
+`EMAIL_ON_ISSUE="true"`
+
+**Log:** `/var/log/ntp_drift_monitor.log`
+
+**Cron:** `0 * * * * /usr/local/bin/ntp_drift_monitor.sh`
+
+
+## 📄 log_growth_guard.sh — Log Size & Growth <a name="log--growth--guard"></a>
+
+**What it does:** Checks absolute size and MB/hour growth; notes rotations; optional rotate command (off by default).
+
+#### Config:
+`/etc/linux_maint/log_paths.txt (supports file/glob/dir/dir/**)`
+
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt`
+
+`/etc/linux_maint/emails.txt`
+
+`SIZE_WARN_MB=1024`
+
+`SIZE_CRIT_MB=2048`
+
+`RATE_WARN_MBPH=200`
+
+`RATE_CRIT_MBPH=500`
+
+**Log:** `/var/log/log_growth_guard.log`
+
+**Cron:** `0 * * * * /usr/local/bin/log_growth_guard.sh`
+
+
+## 📄 ports_baseline_monitor.sh — Listening Ports Baseline <a name="ports--baseline--monitor"></a>
+
+**What it does:** Normalizes listeners to `proto|port|process`. Compares to per-host baseline; flags NEW/REMOVED; allowlist supported.
+
+**Baselines:** `/etc/linux_maint/baselines/ports/<host>.baseline`
+
+**Allowlist:** `/etc/linux_maint/ports_allowlist.txt (proto:port or proto:port:proc-substring)`
+
+#### Config: 
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt`
+
+`/etc/linux_maint/emails.txt`
+
+`AUTO_BASELINE_INIT="true"`
+
+`BASELINE_UPDATE="false"`
+
+`EMAIL_ON_CHANGE="true"`
+
+**Log:** `var/log/ports_baseline_monitor.log`
+
+**Cron:** `0 * * * * /usr/local/bin/ports_baseline_monitor.sh`
+
+
+## 📄 backup_check.sh — Backup Freshness & Integrity <a name="backup--check"></a>
+
+**What it does:** Finds newest file per pattern and validates age, min size, and optional integrity.
+Refactored to use linux_maint.sh with aggregated email.
+
+**Targets CSV:** `/etc/linux_maint/backup_targets.csv`
+
+**Format:** `host,pattern,min_size_mb,max_age_hours,verify`
+
+**verify:** `none|tar|gzip|cmd:<shell>`(file path passed as $1)
+
+#### Config: /etc/linux_maint/servers.txt
+`/etc/linux_maint/excluded.txt`
+
+`/etc/linux_maint/emails.txt`
+
+`VERIFY_TIMEOUT=60`
+
+`EMAIL_ON_FAILURE="true"`
+
+**Log:** `/var/log/backup_check.log`
+
+**Cron:** `30 2 * * * /usr/local/bin/backup_check.sh`
+
+
+
+## 📄 nfs_mount_monitor.sh — NFS/CIFS Mount Health <a name="nfs--mount--monitor"></a>
+
+**What it does:** Verifies expected mounts exist and are healthy; optional RW test and auto-remount (disabled by default).
+
+**Mounts CSV:** `/etc/linux_maint/mounts.txt` `host` `mountpoint` `fstype` `remote` `options` `mode` `timeout`
+
+#### Config: 
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt`
+
+`/etc/linux_maint/emails.txt`
+
+`AUTO_REMOUNT="false"`
+
+`UMOUNT_FLAGS="-fl"`
+
+`DEFAULT_TIMEOUT=8`
+
+**Log:** `/var/log/nfs_mount_monitor.log`
+
+**Cron:** `*/10 * * * * /usr/local/bin/nfs_mount_monitor.sh`
+
+
+## 📄 config_drift_monitor.sh — Config Baseline & Drift <a name="config--drift--monitor"></a>
+
+**What it does:** Hashes files/dirs/globs (incl. recursive /**) and compares to per-host baseline. 
+Reports **MODIFIED/NEW/REMOVED**. Allowlist supported.
+
+**Paths:** `/etc/linux_maint/config_paths.txt`
+
+**Allowlist:** `/etc/linux_maint/config_allowlist.txt (exact or substring matches)`
+
+**Baselines:** `/etc/linux_maint/baselines/configs/<host>.baseline`
+
+#### Config: 
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt `
+
+`/etc/linux_maint/emails.txt`
+
+`AUTO_BASELINE_INIT="true"`
+
+`BASELINE_UPDATE="false" `
+
+`EMAIL_ON_DRIFT="true"`
+
+**Log:** `/var/log/config_drift_monitor.log`
+
+**Cron:** `30 2 * * * /usr/local/bin/config_drift_monitor.sh`
+
+
+
+## 📄 inode_monitor.sh — Inode Usage <a name="inode--monitor"></a>
+
+**What it does:** Per-mount WARN/CRIT thresholds with a global default; ignores pseudo FS types.
+
+**Thresholds CSV:** `/etc/linux_maint/inode_thresholds.txt → mount` `warn%` `crit%` (use * for default)
+
+**Exclude list:** `/etc/linux_maint/inode_exclude.txt (optional)`
+
+#### Config: 
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt`
+
+`/etc/linux_maint/emails.txt`
+
+**Log:** `/var/log/inode_monitor.log`
+
+**Cron:** `0 * * * * /usr/local/bin/inode_monitor.sh`
+
+
+## 📄 inventory_export.sh — Hardware/Software Inventory Export Script <a name="inventory--export"></a>
+
+**What it does:** Collects key HW/SW facts from each host and appends to a daily CSV. Also saves a per-host details snapshot (CPU, memory, disks, filesystems, LVM, IPs, routes).
+
+**CSV fields (daily file):**
+date,host,fqdn,os,kernel,arch,virt,uptime,cpu_model,sockets,cores_per_socket,threads_per_core,vcpus,mem_mb,swap_mb,disk_total_gb,rootfs_use,vgs,lvs,pvs,vgs_size_gb,ip_list,default_gw,dns_servers,pkg_count
+
+#### Config:
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt` (optional)
+
+`/etc/linux_maint/emails.txt` (optional; used if `MAIL_ON_RUN=true`)
+
+**Output:**
+
+`CSV → /var/log/inventory/inventory_<YYYY-MM-DD>.csv`
+
+`Details → /var/log/inventory/details/<host>_<YYYY-MM-DD>.txt`
+
+**Log:** `/var/log/inventory_export.log`
+
+**Cron:** `10 2 * * * /usr/local/bin/inventory_export.sh`
+
+**Notes:** Works on Debian/Ubuntu (dpkg) and RHEL/Fedora/SUSE (rpm). Missing tools are skipped gracefully.
+
+
+## 📄 network_monitor.sh — Ping / TCP / HTTP Network Monitor <a name="network--monitor"></a>
+
+**What it does:** From each host, runs network probes:
+- ping → packet loss & avg RTT thresholds
+- tcp → port reachability & connect latency
+- http/https → status code & total latency (curl)
+
+Reads checks from a targets file and aggregates WARN/CRIT to a single email.
+
+#### Config:
+
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt` (optional)
+
+`/etc/linux_maint/emails.txt` (optional; used if `EMAIL_ON_ALERT=true`)
+
+`/etc/linux_maint/network_targets.txt` (checks)
+
+**Targets format (CSV, one per line):** `host,check,target,key=val,key=val,...`
+
+**host:** exact hostname from servers.txt or * for all
+
+**check:** ping | tcp | http | https
+
+**target:**
+- ping → hostname/IP
+- tcp → host:port
+- http(s) → URL
+
+**common keys:**
+
+**ping:** `count (3)` `timeout (3s)` `loss_warn (20)` `loss_crit (50)` `rtt_warn_ms (150)` `rtt_crit_ms (500)`
+
+**tcp:** `timeout (3s)` `latency_warn_ms (300)` `latency_crit_ms (1000)`
+
+**http(s):** `timeout (5s)` `latency_warn_ms (800)` `latency_crit_ms (2000)` `expect (e.g. 2xx, 200-399, 200,301,302, or 200)`
+
+**Examples:**
+```
+*,ping,8.8.8.8,count=3,timeout=3,rtt_warn_ms=120,rtt_crit_ms=400
+*,tcp,internal-db:5432,timeout=2,latency_warn_ms=250,latency_crit_ms=800
+web01,http,https://app.example.com/health,timeout=3,expect=200
+```
+
+**Log:** `/var/log/network_monitor.log`
+
+**Cron:** `*/5 * * * * /usr/local/bin/network_monitor.sh`
+
+**Notes:** Uses `/dev/tcp` latency when possible; falls back to nc. HTTP requires curl on target hosts.
+
+
+
+
+## 📄 process_hog_monitor.sh — Sustained CPU/RAM Process Monitor <a name="process--hog--monitor"></a>
+
+**What it does:** Samples processes and alerts only if a process stays above CPU and/or MEM thresholds for configured durations (filters out one-off spikes). Keeps per-host state between runs.
+
+#### Config:
+`/etc/linux_maint/servers.txt`
+
+`/etc/linux_maint/excluded.txt` (optional)
+
+`/etc/linux_maint/emails.txt` (optional; used if `EMAIL_ON_ALERT=true`)
+
+`/etc/linux_maint/process_hog_ignore.txt` (optional; case-insensitive substrings of commands to ignore, one per line)
+
+**Thresholds & behavior (tunable inside the script):** `CPU_WARN=70` `CPU_CRIT=90` `MEM_WARN=30` `MEM_CRIT=60` `DURATION_WARN_SEC=120` `DURATION_CRIT_SEC=300` `MAX_PROCESSES=0` (0 = consider all; otherwise top N by CPU)
+
+**Log:** `/var/log/process_hog_monitor.log`
+**State:** `/var/tmp/process_hog_monitor.<host>.state`
+
+**Cron:** `*/5 * * * * /usr/local/bin/process_hog_monitor.sh`
+
+**Notes**: Identifies processes via PID + /proc/PID/stat start time to avoid PID-reuse issues. Mails one aggregated table of sustained hogs.
 
 
 
