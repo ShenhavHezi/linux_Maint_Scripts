@@ -5,9 +5,10 @@ A curated set of lightweight Bash tools for day-to-day Linux ops: monitoring, in
 ---
 
 ## 📚 Table of Contents
-- Conventions & Layout
+- [Conventions & Layout](#Conventions--and--Layout) 
 - Shared Helpers (linux_maint.sh)
 - Quickstart
+- Script Matrix
 
 Script:
 - [Disk Monitor (`disk_monitor.sh`)](#disk_monitorsh--linux-disk-usage-monitoring-script)
@@ -30,7 +31,7 @@ Script:
 ---
 
 
-## 🧭 Conventions & Layout
+## 🧭 Conventions & Layout <a name="Conventions--and--Layout"></a>
 **Install paths (convention):**
 
 `/usr/local/bin/                 # scripts`
@@ -113,7 +114,25 @@ sudo crontab -e
 ```
 
 
+## 🧾 Script Matrix
 
+| Script                          | Purpose                                                 | Runs On      | Log                                           |
+| ------------------------------- | ------------------------------------------------------- | ------------ | --------------------------------------------- |
+| distributed\_disk\_monitor.sh   | Disk usage threshold alerts                             | Local + SSH  | `/var/log/disks_monitor.log`                  |
+| distributed\_health\_monitor.sh | CPU/Mem/Load/Disk snapshot                              | Local + SSH  | `/var/log/health_monitor.log`                 |
+| user\_monitor.sh                | New/removed users, sudoers checksum, failed SSH         | Local + SSH  | `/var/log/user_monitor.log`                   |
+| service\_monitor.sh             | Status of critical services; optional auto-restart      | Local + SSH  | `/var/log/service_monitor.log`                |
+| servers\_info.sh                | Daily system snapshot (HW/OS/net/services)              | Local (typ.) | `/var/log/server_info/<host>_info_<date>.log` |
+| patch\_monitor.sh               | Pending updates, security/kernel, reboot flag           | Local + SSH  | `/var/log/patch_monitor.log`                  |
+| cert\_monitor.sh                | TLS expiry & OpenSSL verify for endpoints               | Local only   | `/var/log/cert_monitor.log`                   |
+| ntp\_drift\_monitor.sh          | Time sync impl + offset/stratum (uses `linux_maint.sh`) | Local + SSH  | `/var/log/ntp_drift_monitor.log`              |
+| log\_growth\_guard.sh           | Log absolute size & growth rate                         | Local + SSH  | `/var/log/log_growth_guard.log`               |
+| ports\_baseline\_monitor.sh     | NEW/REMOVED listeners vs baseline                       | Local + SSH  | `/var/log/ports_baseline_monitor.log`         |
+| backup\_check.sh                | Latest backup age/size/verify (uses `linux_maint.sh`)   | Local + SSH  | `/var/log/backup_check.log`                   |
+| nfs\_mount\_monitor.sh          | Mount presence/health; optional remount                 | Local + SSH  | `/var/log/nfs_mount_monitor.log`              |
+| config\_drift\_monitor.sh       | File hashes vs baseline; NEW/MOD/REMOVED                | Local + SSH  | `/var/log/config_drift_monitor.log`           |
+| inode\_monitor.sh               | Inode usage thresholds per mount                        | Local + SSH  | `/var/log/inode_monitor.log`                  |
+| inventory\_export.sh            | CSV inventory + per-host details                        | Local + SSH  | `/var/log/inventory_export.log`               |
 
 
 
