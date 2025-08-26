@@ -105,7 +105,7 @@ sudo cp linux_maint.sh /usr/local/lib/
 ```
 
 #### 3) Try one script locally
-`sudo bash /usr/local/bin/distributed_disk_monitor.sh`
+`sudo bash /usr/local/bin/disk_monitor.sh`
 
 #### 4) Add cron (example: daily at 03:00)
 ```
@@ -118,8 +118,8 @@ sudo crontab -e
 
 | Script                          | Purpose                                                 | Runs On      | Log                                           |
 | ------------------------------- | ------------------------------------------------------- | ------------ | --------------------------------------------- |
-| distributed\_disk\_monitor.sh   | Disk usage threshold alerts                             | Local + SSH  | `/var/log/disks_monitor.log`                  |
-| distributed\_health\_monitor.sh | CPU/Mem/Load/Disk snapshot                              | Local + SSH  | `/var/log/health_monitor.log`                 |
+| disk\_monitor.sh                | Disk usage threshold alerts                             | Local + SSH  | `/var/log/disks_monitor.log`                  |
+| health\_monitor.sh              | CPU/Mem/Load/Disk snapshot                              | Local + SSH  | `/var/log/health_monitor.log`                 |
 | user\_monitor.sh                | New/removed users, sudoers checksum, failed SSH         | Local + SSH  | `/var/log/user_monitor.log`                   |
 | service\_monitor.sh             | Status of critical services; optional auto-restart      | Local + SSH  | `/var/log/service_monitor.log`                |
 | servers\_info.sh                | Daily system snapshot (HW/OS/net/services)              | Local (typ.) | `/var/log/server_info/<host>_info_<date>.log` |
@@ -153,9 +153,9 @@ sudo crontab -e
 
 **Log:** `/var/log/disks_monitor.log`
 
-**Run:** `bash /usr/local/bin/distributed_disk_monitor.sh`
+**Run:** `bash /usr/local/bin/disk_monitor.sh`
 
-**Cron:**` 0 8 * * * /usr/local/bin/distributed_disk_monitor.sh`
+**Cron:**` 0 8 * * * /usr/local/bin/disk_monitor.sh`
 
 
 ## 📄 health_monitor.sh — System Health <a name="health--monitor"></a>
@@ -172,7 +172,7 @@ sudo crontab -e
 
 **Log:** `/var/log/health_monitor.log`
 
-**Cron:** ` 0 8 * * * /usr/local/bin/distributed_health_monitor.sh`
+**Cron:** ` 0 8 * * * /usr/local/bin/health_monitor.sh`
 
 
 ## 📄 user_monitor.sh — Users & SSH Access <a name="user--monitor"></a>
