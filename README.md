@@ -6,7 +6,7 @@ A curated set of lightweight Bash tools for day-to-day Linux ops: monitoring, in
 
 ## 📚 Table of Contents
 - [Conventions & Layout](#conventions--and--layout) 
-- [Shared Helpers (linux_maint.sh)](#shared--helpers)
+- [Shared Helpers (`linux_maint.sh`)](#shared--helpers)
 - [Quickstart](#quickstart)
 - [Script Matrix](#script--matrix)
 
