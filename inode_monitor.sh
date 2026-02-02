@@ -77,6 +77,8 @@ collect_inodes(){
 
 rate_status(){
   local use="$1" warn="$2" crit="$3"
+  # guard non-numeric (some df variants may return "-" or empty)
+  [[ "$use" =~ ^[0-9]+$ ]] || { echo "OK"; return; }
   if [ "$use" -ge "$crit" ]; then echo "CRIT"; return; fi
   if [ "$use" -ge "$warn" ]; then echo "WARN"; return; fi
   echo "OK"

@@ -135,7 +135,7 @@ run_for_host(){
 
     if [ "$st" != "OK" ]; then
       append_alert "$host|$fs|$fstype|$mp|$use|$warn/$crit|$st|"
-    end
+    fi
   done <<< "$lines"
 
   lm_info "===== Completed $host ====="
