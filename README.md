@@ -16,7 +16,13 @@ cd linux_Maint_Scripts
 # Install
 sudo install -D -m 0755 linux_maint.sh /usr/local/lib/linux_maint.sh
 sudo install -D -m 0755 run_full_health_monitor.sh /usr/local/sbin/run_full_health_monitor.sh
-sudo install -D -m 0755 *.sh /usr/local/libexec/linux_maint/
+# Install monitor scripts (exclude the wrapper)
+sudo install -D -m 0755 \
+  backup_check.sh cert_monitor.sh config_drift_monitor.sh health_monitor.sh \
+  inode_monitor.sh inventory_export.sh network_monitor.sh nfs_mount_monitor.sh \
+  ntp_drift_monitor.sh patch_monitor.sh ports_baseline_monitor.sh \
+  service_monitor.sh user_monitor.sh \
+  /usr/local/libexec/linux_maint/
 
 # Create config/log directories
 sudo mkdir -p /etc/linux_maint /etc/linux_maint/baselines /var/log/health
@@ -46,7 +52,6 @@ sudo mkdir -p /etc/linux_maint /etc/linux_maint/baselines /var/log/health
   ntp_drift_monitor.sh
   patch_monitor.sh
   ports_baseline_monitor.sh
-  run_full_health_monitor.sh   # (repo file; installed copy lives in /usr/local/sbin)
   service_monitor.sh
   user_monitor.sh
 
