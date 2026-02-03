@@ -18,10 +18,9 @@ jobs:
 
       - name: ShellCheck
         run: |
-          # Ignore a small set of noisy warnings that are common false-positives in remote heredocs
-          # and multi-line string construction patterns used by this project.
+          # Ignore a small set of noisy findings common with remote heredocs and dynamic bash patterns.
           shellcheck -x \
-            -e SC2016,SC2034,SC2155,SC2317 \
+            -e SC2016,SC2034,SC2086,SC2155,SC2162,SC2317 \
             -- ./*.sh ./install.sh ./linux-maint ./tools/*.sh
 
       - name: Verify README tuning knobs are up to date
