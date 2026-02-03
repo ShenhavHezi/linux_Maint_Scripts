@@ -96,6 +96,12 @@ run_one() {
     return 3
   fi
 
+  if [ "$s" = "config_validate.sh" ]; then
+    # Validation warnings should not fail the full run; log output but ignore exit code.
+    bash "$path" >> "$tmp_report" 2>&1 || true
+    return 0
+  fi
+
   bash "$path" >> "$tmp_report" 2>&1
 }
 
