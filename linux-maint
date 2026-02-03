@@ -20,6 +20,9 @@ Commands:
   validate            Validate config file formats (best-effort)
   preflight           Run preflight checks
   version             Print installed BUILD_INFO (if present)
+  install [args]      Run ./install.sh (pass-through)
+  uninstall [args]    Run ./install.sh --uninstall (pass-through)
+  make-tarball        Build offline release tarball (tools/make_tarball.sh)
   logs [n]            Tail latest wrapper log (default n=200)
   help                Show this help
 
@@ -85,6 +88,19 @@ case "$cmd" in
     fi
     ;;
 
+
+
+  install)
+    exec sudo ./install.sh "$@"
+    ;;
+
+  uninstall)
+    exec sudo ./install.sh --uninstall "$@"
+    ;;
+
+  make-tarball)
+    exec ./tools/make_tarball.sh "$@"
+    ;;
   *)
     echo "Unknown command: $cmd" >&2
     usage

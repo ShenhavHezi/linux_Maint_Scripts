@@ -18,7 +18,7 @@ jobs:
 
       - name: ShellCheck
         run: |
-          shellcheck -x *.sh install.sh
+          shellcheck -x *.sh install.sh linux-maint tools/*.sh
 
       - name: Verify README tuning knobs are up to date
         run: |
