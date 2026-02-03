@@ -558,13 +558,15 @@ On a connected workstation:
 git clone https://github.com/ShenhavHezi/linux_Maint_Scripts.git
 cd linux_Maint_Scripts
 
-tar -czf linux_Maint_Scripts.tgz .
+# Recommended: build a versioned tarball with BUILD_INFO
+./tools/make_tarball.sh
+# output: dist/linux_Maint_Scripts-<version>-<sha>.tgz
 ```
 
-Copy `linux_Maint_Scripts.tgz` to the dark-site server, extract, then install:
+Copy the generated tarball from `dist/` to the dark-site server, extract, then install:
 
 ```bash
-tar -xzf linux_Maint_Scripts.tgz
+tar -xzf linux_Maint_Scripts-*.tgz
 sudo ./install.sh --with-logrotate
 # (optional)
 # sudo ./install.sh --with-user --with-timer --with-logrotate
