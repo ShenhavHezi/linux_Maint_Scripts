@@ -1,6 +1,28 @@
 # Linux Maintenance Scripts
 
 
+## Table of Contents
+
+- [Installation (recommended Linux paths)](#installation-recommended-linux-paths)
+- [Recommended operating model](#recommended-operating-model)
+- [Distributed mode (recommended)](#distributed-mode-recommended)
+- [Least privilege / sudo (recommended)](#least-privilege--sudo-recommended)
+- [Alerting model (email)](#alerting-model-email)
+- [Monitor reference (what checks what)](#monitor-reference-what-checks-what)
+- [Tuning knobs (common configuration variables)](#tuning-knobs-common-configuration-variables)
+- [Exit codes (for automation)](#exit-codes-for-automation)
+- [Installed file layout (recommended)](#installed-file-layout-recommended)
+- [What runs in the nightly "full package" (cron)](#what-runs-in-the-nightly-full-package-cron)
+- [Configuration files under `/etc/linux_maint/`](#configuration-files-under-etclinux_maint)
+- [Optional monitors: enablement examples](#optional-monitors-enablement-examples)
+- [Quick manual run](#quick-manual-run)
+- [Uninstall](#uninstall)
+- [Log rotation (recommended)](#log-rotation-recommended)
+- [Upgrading](#upgrading)
+- [Troubleshooting](#troubleshooting)
+
+
+
 ## Installation (recommended Linux paths)
 
 This layout matches common Linux conventions:
@@ -132,6 +154,15 @@ LM_EMAIL_ENABLED=true /usr/local/sbin/run_full_health_monitor.sh
 | `backup_check.sh` | backup freshness/integrity | `backup_targets.csv` | old/missing/small/corrupt backups |
 | `inventory_export.sh` | HW/SW inventory CSV | none | collection failures |
 
+
+
+### Keeping README defaults in sync
+
+If you change default thresholds/paths inside scripts, regenerate the **Tuning knobs** section before committing:
+
+```bash
+python3 tools/update_readme_defaults.py
+```
 
 ## Tuning knobs (common configuration variables)
 
