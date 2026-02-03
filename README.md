@@ -53,6 +53,21 @@ sudo mkdir -p /etc/linux_maint /etc/linux_maint/baselines /var/log/health
 ```
 
 
+
+### Installer script (recommended)
+
+For a one-command installation (including optional systemd timer/logrotate/user creation):
+
+```bash
+sudo ./install.sh --with-user --with-timer --with-logrotate
+```
+
+To uninstall installed binaries (keeps `/etc/linux_maint` and logs by default):
+
+```bash
+sudo ./install.sh --uninstall
+```
+
 ### Permissions / hardening (recommended)
 After installation, keep the scripts directory root-owned and not writable by non-root users:
 
