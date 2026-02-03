@@ -133,6 +133,66 @@ LM_EMAIL_ENABLED=true /usr/local/sbin/run_full_health_monitor.sh
 | `inventory_export.sh` | HW/SW inventory CSV | none | collection failures |
 
 
+## Tuning knobs (common configuration variables)
+
+Most monitors have sensible defaults but can be tuned by editing the script-local variables near the top of each script,
+or (where supported) by exporting environment variables before running the wrapper.
+
+Common knobs by monitor:
+
+- `inode_monitor.sh`
+  - `DEFAULT_WARN` / `DEFAULT_CRIT` (percentage thresholds)
+  - `THRESHOLDS`: `/etc/linux_maint/inode_thresholds.txt` (per-mount overrides)
+  - `EXCLUDE_MOUNTS`: `/etc/linux_maint/inode_excluded_mounts.txt`
+
+- `network_monitor.sh`
+  - `PING_COUNT`, `PING_TIMEOUT`, `PING_LOSS_WARN`, `PING_LOSS_CRIT`
+  - `TCP_TIMEOUT`, `TCP_LAT_WARN_MS`, `TCP_LAT_CRIT_MS`
+  - `HTTP_TIMEOUT`, `HTTP_LAT_WARN_MS`, `HTTP_LAT_CRIT_MS`, `HTTP_EXPECT`
+  - Per-target overrides via `key=value` in `network_targets.txt`
+
+- `service_monitor.sh`
+  - `AUTO_RESTART` (attempt restart on failure)
+  - `EMAIL_ON_ALERT`
+
+- `ntp_drift_monitor.sh`
+  - Lookback/threshold variables (offset warn/crit) defined near the top of the script
+
+- `patch_monitor.sh`
+  - Distro detection is automatic; behavior flags (email-on-action, etc.) are defined near the top of the script
+
+- `ports_baseline_monitor.sh`
+  - `AUTO_BASELINE_INIT`, `BASELINE_UPDATE`, `INCLUDE_PROCESS`
+  - `ALLOWLIST_FILE`: `/etc/linux_maint/ports_allowlist.txt`
+
+- `config_drift_monitor.sh`
+  - `AUTO_BASELINE_INIT`, `BASELINE_UPDATE`
+  - `ALLOWLIST_FILE`: `/etc/linux_maint/config_allowlist.txt`
+
+- `user_monitor.sh`
+  - `USER_MIN_UID` (focus on human users, e.g. 1000)
+  - `FAILED_WINDOW_HOURS`, `FAILED_WARN`, `FAILED_CRIT`
+  - `AUTO_BASELINE_INIT`, `BASELINE_UPDATE`
+
+- `backup_check.sh`
+  - Backup policies live in `/etc/linux_maint/backup_targets.csv`
+  - Supports integrity verify modes (`tar`, `gzip`, `none`, or `cmd:<shell>`)
+
+Notes:
+- If you want a strict “config-only” operation model, we can move more of these settings into `/etc/linux_maint/*.conf` files.
+
+
+## Exit codes (for automation)
+
+All scripts aim to follow:
+- `0` = OK
+- `1` = WARN
+- `2` = CRIT
+- `3` = UNKNOWN/ERROR
+
+The wrapper returns the **worst** exit code across all executed monitors.
+
+
 ## Installed file layout (recommended)
 
 ```text
