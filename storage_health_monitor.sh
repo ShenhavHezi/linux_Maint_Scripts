@@ -27,6 +27,9 @@ EMAIL_ON_ISSUE="true"
 SMARTCTL_TIMEOUT_SECS=10
 MAX_SMART_DEVICES=32
 
+# RAID controller tools (best-effort).
+RAID_TOOL_TIMEOUT_SECS=12
+
 ALERTS_FILE="$(mktemp -p "${LM_STATE_DIR:-/var/tmp}" storage_health_monitor.alerts.XXXXXX)"
 append_alert(){ echo "$1" >> "$ALERTS_FILE"; }
 mail_if_enabled(){ [ "$EMAIL_ON_ISSUE" = "true" ] || return 0; lm_mail "$1" "$2"; }
@@ -102,17 +105,58 @@ if have nvme; then
   [ "$nvme_checked" -eq 0 ] && nvme_status="NA"
 fi
 
+# ---- RAID controller tools (best-effort) ----
+ctrl_status="NA"
+ctrl_note=""
+
+# MegaRAID storcli/perccli
+if have storcli || have perccli; then
+  ctrl_status="OK"
+  cli="$(command -v storcli || command -v perccli)"
+  if have timeout; then
+    out=$(timeout "${RAID_TOOL_TIMEOUT_SECS:-12}" "$cli" /cALL show all 2>/dev/null || true)
+  else
+    out=$($cli /cALL show all 2>/dev/null || true)
+  fi
+  echo "$out" | grep -Eqi "Degraded|Offline|Failed" && ctrl_status="CRIT"
+  echo "$out" | grep -Eqi "Rebuild|Initializing|Resync" && [ "$ctrl_status" = "OK" ] && ctrl_status="WARN"
+  echo "$out" | grep -Eqi "Predictive" && ctrl_status="CRIT"
+  ctrl_note="storcli"
+fi
+
+# HP Smart Array (ssacli)
+if [ "$ctrl_status" = "NA" ] && have ssacli; then
+  ctrl_status="OK"; ctrl_note="ssacli"
+  if have timeout; then
+    out=$(timeout "${RAID_TOOL_TIMEOUT_SECS:-12}" ssacli ctrl all show config detail 2>/dev/null || true)
+  else
+    out=$(ssacli ctrl all show config detail 2>/dev/null || true)
+  fi
+  echo "$out" | grep -Eqi "Failed|Degraded|Rebuilding" && ctrl_status="CRIT"
+fi
+
+# Dell OMSA (omreport)
+if [ "$ctrl_status" = "NA" ] && have omreport; then
+  ctrl_status="OK"; ctrl_note="omreport"
+  if have timeout; then
+    out=$(timeout "${RAID_TOOL_TIMEOUT_SECS:-12}" omreport storage vdisk 2>/dev/null || true)
+  else
+    out=$(omreport storage vdisk 2>/dev/null || true)
+  fi
+  echo "$out" | grep -Eqi "Degraded|Failed" && ctrl_status="CRIT"
+fi
+
 rank(){ case "$1" in OK) echo 0;; WARN) echo 1;; CRIT) echo 2;; *) echo 0;; esac; }
 worst=0
-for s in "$md_status" "$smart_status" "$nvme_status"; do
+for s in "$md_status" "$smart_status" "$nvme_status" "$ctrl_status"; do
   [ "$s" = "NA" ] && continue
   r=$(rank "$s")
   [ "$r" -gt "$worst" ] && worst=$r
 done
 case "$worst" in 0) overall="OK";; 1) overall="WARN";; 2) overall="CRIT";; *) overall="OK";; esac
 
-printf "mdraid=%s smart=%s smart_checked=%s smart_bad=%s nvme=%s nvme_checked=%s nvme_bad=%s overall=%s\n" \
-  "$md_status" "$smart_status" "$smart_checked" "$smart_bad" "$nvme_status" "$nvme_checked" "$nvme_bad" "$overall"
+printf "mdraid=%s smart=%s smart_checked=%s smart_bad=%s nvme=%s nvme_checked=%s nvme_bad=%s ctrl=%s(%s) overall=%s\n" \
+  "$md_status" "$smart_status" "$smart_checked" "$smart_bad" "$nvme_status" "$nvme_checked" "$nvme_bad" "$ctrl_status" "${ctrl_note:-}" "$overall"
 EOF
 }
 
@@ -137,7 +181,7 @@ run_for_host(){
     return 3
   fi
 
-  local md smart smart_checked smart_bad nvme nvme_checked nvme_bad overall
+  local md smart smart_checked smart_bad nvme nvme_checked nvme_bad ctrl overall
   md=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="mdraid") print $(i+1)}')
   smart=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="smart") print $(i+1)}')
   smart_checked=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="smart_checked") print $(i+1)}')
@@ -145,6 +189,7 @@ run_for_host(){
   nvme=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="nvme") print $(i+1)}')
   nvme_checked=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="nvme_checked") print $(i+1)}')
   nvme_bad=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="nvme_bad") print $(i+1)}')
+ctrl=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="ctrl") print $(i+1)}')
   overall=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="overall") print $(i+1)}')
 
   local rc
@@ -154,7 +199,7 @@ run_for_host(){
     append_alert "$host|storage|mdraid=$md smart=$smart($smart_bad/$smart_checked) nvme=$nvme($nvme_bad/$nvme_checked)"
   fi
 
-  echo "storage_health_monitor host=$host status=$overall mdraid=$md smart=$smart checked=$smart_checked bad=$smart_bad nvme=$nvme checked_nvme=$nvme_checked bad_nvme=$nvme_bad"
+  echo "storage_health_monitor host=$host status=$overall mdraid=$md smart=$smart checked=$smart_checked bad=$smart_bad nvme=$nvme checked_nvme=$nvme_checked bad_nvme=$nvme_bad ctrl=$ctrl"
   return "$rc"
 }
 

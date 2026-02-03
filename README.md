@@ -279,6 +279,7 @@ Most defaults below are taken directly from the scripts (current repository vers
 ### `storage_health_monitor.sh`
 - `SMARTCTL_TIMEOUT_SECS` = `10`
 - `MAX_SMART_DEVICES` = `32`
+- `RAID_TOOL_TIMEOUT_SECS` = `12`
 - `EMAIL_ON_ISSUE` = `"true"`
 
 ### `kernel_events_monitor.sh`

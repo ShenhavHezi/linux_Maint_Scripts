@@ -34,7 +34,7 @@ SCRIPTS_ORDER = [
     ]),
     ("backup_check.sh", ["TARGETS", "INTEGRITY_TIMEOUT", "EMAIL_ON_ALERT"]),
     ("cert_monitor.sh", ["CERTS", "THRESHOLD_WARN_DAYS", "THRESHOLD_CRIT_DAYS", "TIMEOUT_SECS", "EMAIL_ON_WARN"]),
-    ("storage_health_monitor.sh", ["SMARTCTL_TIMEOUT_SECS", "MAX_SMART_DEVICES", "EMAIL_ON_ISSUE"]),
+    ("storage_health_monitor.sh", ["SMARTCTL_TIMEOUT_SECS", "MAX_SMART_DEVICES", "RAID_TOOL_TIMEOUT_SECS", "EMAIL_ON_ISSUE"]),
     ("kernel_events_monitor.sh", ["KERNEL_WINDOW_HOURS", "WARN_COUNT", "CRIT_COUNT", "PATTERNS", "EMAIL_ON_ALERT"]),
     ("preflight_check.sh", ["REQ_CMDS", "OPT_CMDS"]),
     ("disk_trend_monitor.sh", ["STATE_BASE", "WARN_DAYS", "CRIT_DAYS", "HARD_WARN_PCT", "HARD_CRIT_PCT", "MIN_POINTS", "EXCLUDE_FSTYPES_RE", "EXCLUDE_MOUNTS_FILE"]),
