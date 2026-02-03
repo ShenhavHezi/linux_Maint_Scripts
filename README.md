@@ -43,7 +43,7 @@ sudo install -d /usr/local/libexec/linux_maint
 sudo install -D -m 0755 \
   backup_check.sh cert_monitor.sh config_drift_monitor.sh health_monitor.sh \
   inode_monitor.sh inventory_export.sh network_monitor.sh nfs_mount_monitor.sh \
-  ntp_drift_monitor.sh patch_monitor.sh ports_baseline_monitor.sh \
+  ntp_drift_monitor.sh patch_monitor.sh storage_health_monitor.sh kernel_events_monitor.sh ports_baseline_monitor.sh \
   service_monitor.sh user_monitor.sh \
   /usr/local/libexec/linux_maint/
 
@@ -145,6 +145,8 @@ LM_EMAIL_ENABLED=true /usr/local/sbin/run_full_health_monitor.sh
 | `service_monitor.sh` | service health (systemd) | `services.txt` | inactive/failed services |
 | `ntp_drift_monitor.sh` | time sync health | none | unsynced clock, high offset |
 | `patch_monitor.sh` | pending updates/reboot hints | none | security updates pending, reboot required |
+| `storage_health_monitor.sh` | RAID/SMART/NVMe storage health | none (best-effort) | degraded RAID, SMART failures, NVMe critical warnings |
+| `kernel_events_monitor.sh` | kernel log scan (OOM/I/O/FS/hung tasks) | none (journalctl recommended) | OOM killer events, disk I/O errors, filesystem errors |
 | `cert_monitor.sh` | certificate expiry | `certs.txt` | expiring/expired certs, verify failures |
 | `nfs_mount_monitor.sh` | NFS mounted + responsive | none | stale/unresponsive mounts |
 | `ports_baseline_monitor.sh` | port drift vs baseline | `ports_baseline.txt` (gate) | new/removed listening ports |
@@ -231,6 +233,18 @@ Most defaults below are taken directly from the scripts (current repository vers
 - `TIMEOUT_SECS` = `10`
 - `EMAIL_ON_WARN` = `"true"`
 
+### `storage_health_monitor.sh`
+- `SMARTCTL_TIMEOUT_SECS` = `10`
+- `MAX_SMART_DEVICES` = `32`
+- `EMAIL_ON_ISSUE` = `"true"`
+
+### `kernel_events_monitor.sh`
+- `KERNEL_WINDOW_HOURS` = `24`
+- `WARN_COUNT` = `1`
+- `CRIT_COUNT` = `5`
+- `PATTERNS` = `'oom-killer|out of memory|killed process|soft lockup|hard lockup|hung task|blocked for more than|I/O error|blk_update_request|Buffer I/O error|EXT4-fs error|XFS \(|btrfs: error|nvme.*timeout|resetting link|ata[0-9].*failed|mce:|machine check'`
+- `EMAIL_ON_ALERT` = `"true"`
+
 ### `nfs_mount_monitor.sh`
 - `NFS_STAT_TIMEOUT` = `5`
 - `EMAIL_ON_ISSUE` = `"true"`
@@ -268,6 +282,8 @@ The wrapper returns the **worst** exit code across all executed monitors.
   nfs_mount_monitor.sh
   ntp_drift_monitor.sh
   patch_monitor.sh
+  storage_health_monitor.sh
+  kernel_events_monitor.sh
   ports_baseline_monitor.sh
   service_monitor.sh
   user_monitor.sh

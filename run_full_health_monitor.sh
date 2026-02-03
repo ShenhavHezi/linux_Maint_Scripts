@@ -46,6 +46,8 @@ declare -a scripts=(
   "service_monitor.sh"
   "ntp_drift_monitor.sh"
   "patch_monitor.sh"
+  "storage_health_monitor.sh"
+  "kernel_events_monitor.sh"
   "cert_monitor.sh"
   "nfs_mount_monitor.sh"
   "ports_baseline_monitor.sh"
