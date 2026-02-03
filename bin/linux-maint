@@ -31,6 +31,13 @@ if [[ -d "$REPO_MONITORS" && -f "$REPO_LIB" ]]; then
   validate="$REPO_MONITORS/config_validate.sh"
 fi
 
+MODE="installed"
+[[ "$wrapper" == "$REPO_WRAPPER" ]] && MODE="repo"
+REPO_LOG_DIR="$REPO_ROOT/.logs"
+REPO_STATUS_FILE="$REPO_LOG_DIR/last_status_full"
+REPO_LATEST_LOG="$REPO_LOG_DIR/full_health_monitor_latest.log"
+
+
 usage(){
   cat <<EOF2
 Usage: linux-maint <command> [args]
@@ -72,9 +79,14 @@ case "$cmd" in
     ;;
 
   logs)
-    n="${1:-200}"
-    exec sudo -n tail -n "$n" /var/log/health/full_health_monitor_latest.log 2>/dev/null \
-      || tail -n "$n" /var/log/health/full_health_monitor_latest.log
+        n="${1:-200}"
+        if [[ "$MODE" == "repo" ]]; then
+          mkdir -p "$REPO_LOG_DIR"
+          [[ -f "$REPO_LATEST_LOG" ]] || { echo "No repo log yet: $REPO_LATEST_LOG"; exit 1; }
+          tail -n "$n" "$REPO_LATEST_LOG"
+        else
+          exec sudo -n tail -n "$n" /var/log/health/full_health_monitor_latest.log 2>/dev/null || tail -n "$n" /var/log/health/full_health_monitor_latest.log
+        fi
     ;;
 
   version)
@@ -95,37 +107,48 @@ case "$cmd" in
     ;;
 
   status)
-    status_file="/var/log/health/last_status_full"
-    echo "=== Mode ==="
-    if [[ -d "$REPO_MONITORS" && -f "$REPO_LIB" && "$wrapper" == "$REPO_WRAPPER" ]]; then
-      echo "repo"
-      echo "repo_root: $REPO_ROOT"
-      echo "linux_maint_lib: ${LINUX_MAINT_LIB:-}"
-    else
-      echo "installed"
-      echo "prefix: $PREFIX"
-    fi
-
-    echo ""; echo "=== Installed paths (if installed) ==="
-    echo "wrapper: $SBIN/run_full_health_monitor.sh"
-    echo "libexec: $LIBEXEC"
-    echo "build_info: $SHARE/BUILD_INFO"
-    [[ -f "$SHARE/BUILD_INFO" ]] && { echo ""; cat "$SHARE/BUILD_INFO"; }
-
-    echo ""; echo "=== Last run status ==="
-    if [[ -f "$status_file" ]]; then
-      cat "$status_file"
-    else
-      echo "No status file: $status_file"
-    fi
-
-    echo ""; echo "=== Recent WARN/CRIT/UNKNOWN lines (latest log) ==="
-    log="/var/log/health/full_health_monitor_latest.log"
-    if [[ -f "$log" ]]; then
-      grep -E ' status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT' "$log" | tail -n 80 || true
-    else
-      echo "No log: $log"
-    fi
+        if [[ "$MODE" == "repo" ]]; then
+          echo "=== Mode ==="
+          echo "repo"
+          echo "repo_root: $REPO_ROOT"
+          echo "linux_maint_lib: ${LINUX_MAINT_LIB:-}"
+          echo "logs: $REPO_LOG_DIR"
+          echo ""; echo "=== Last run status ==="
+          if [[ -f "$REPO_STATUS_FILE" ]]; then
+            cat "$REPO_STATUS_FILE"
+          else
+            echo "No status file: $REPO_STATUS_FILE"
+          fi
+          echo ""; echo "=== Recent WARN/CRIT/UNKNOWN lines (latest log) ==="
+          if [[ -f "$REPO_LATEST_LOG" ]]; then
+            grep -E " status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT" "$REPO_LATEST_LOG" | tail -n 80 || true
+          else
+            echo "No log: $REPO_LATEST_LOG"
+          fi
+          exit 0
+        fi
+        status_file="/var/log/health/last_status_full"
+        echo "=== Mode ==="
+        echo "installed"
+        echo "prefix: $PREFIX"
+        echo ""; echo "=== Installed paths ==="
+        echo "wrapper: $SBIN/run_full_health_monitor.sh"
+        echo "libexec: $LIBEXEC"
+        echo "build_info: $SHARE/BUILD_INFO"
+        [[ -f "$SHARE/BUILD_INFO" ]] && { echo ""; cat "$SHARE/BUILD_INFO"; }
+        echo ""; echo "=== Last run status ==="
+        if [[ -f "$status_file" ]]; then
+          cat "$status_file"
+        else
+          echo "No status file: $status_file"
+        fi
+        echo ""; echo "=== Recent WARN/CRIT/UNKNOWN lines (latest log) ==="
+        log="/var/log/health/full_health_monitor_latest.log"
+        if [[ -f "$log" ]]; then
+          grep -E " status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT" "$log" | tail -n 80 || true
+        else
+          echo "No log: $log"
+        fi
     ;;
 
   install)

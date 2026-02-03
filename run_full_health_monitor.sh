@@ -14,7 +14,12 @@ else
 fi
 SCRIPTS_DIR="${SCRIPTS_DIR:-$SCRIPTS_DIR_DEFAULT}"
 
-LOG_DIR="${LOG_DIR:-/var/log/health}"
+if [[ -d "$REPO_DIR/monitors" ]]; then
+  LOG_DIR_DEFAULT="$REPO_DIR/.logs"
+else
+  LOG_DIR_DEFAULT="/var/log/health"
+fi
+LOG_DIR="${LOG_DIR:-$LOG_DIR_DEFAULT}"
 STATUS_FILE="$LOG_DIR/last_status_full"
 
 mkdir -p "$LOG_DIR"
