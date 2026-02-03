@@ -6,7 +6,7 @@
 - [Installation (recommended Linux paths)](#installation-recommended-linux-paths)
 - [Recommended operating model](#recommended-operating-model)
 - [Distributed mode (recommended)](#distributed-mode-recommended)
-- [Least privilege / sudo (recommended)](#least-privilege--sudo-recommended)
+- [Least privilege / sudo (recommended)](#least-privilege-sudo-recommended)
 - [Alerting model (email)](#alerting-model-email)
 - [Monitor reference (what checks what)](#monitor-reference-what-checks-what)
 - [Tuning knobs (common configuration variables)](#tuning-knobs-common-configuration-variables)
@@ -19,7 +19,6 @@
 - [Uninstall](#uninstall)
 - [Log rotation (recommended)](#log-rotation-recommended)
 - [Upgrading](#upgrading)
-- [Troubleshooting](#troubleshooting)
 
 
 
