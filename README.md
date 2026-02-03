@@ -27,6 +27,47 @@ sudo mkdir -p /etc/linux_maint /etc/linux_maint/baselines /var/log/health
 
 
 
+
+
+## Installed file layout (recommended)
+
+```text
+/usr/local/sbin/run_full_health_monitor.sh
+/usr/local/lib/linux_maint.sh
+/usr/local/libexec/linux_maint/
+  backup_check.sh
+  cert_monitor.sh
+  config_drift_monitor.sh
+  health_monitor.sh
+  inode_monitor.sh
+  inventory_export.sh
+  network_monitor.sh
+  nfs_mount_monitor.sh
+  ntp_drift_monitor.sh
+  patch_monitor.sh
+  ports_baseline_monitor.sh
+  run_full_health_monitor.sh   # (repo file; installed copy lives in /usr/local/sbin)
+  service_monitor.sh
+  user_monitor.sh
+
+/etc/linux_maint/
+  servers.txt
+  excluded.txt
+  services.txt
+  network_targets.txt
+  certs.txt
+  ports_baseline.txt
+  config_paths.txt
+  backup_targets.csv
+  baseline_users.txt
+  baseline_sudoers.txt
+  baselines/
+
+/var/log/health/
+  full_health_monitor_latest.log
+```
+
+
 ## What runs in the nightly "full package" (cron)
 The system cron (root) runs the wrapper:
 
@@ -83,6 +124,30 @@ Run the full package now:
 ```bash
 sudo /usr/local/sbin/run_full_health_monitor.sh
 sudo tail -n 200 /var/log/health/full_health_monitor_latest.log
+```
+
+
+
+
+## Uninstall
+
+Remove the installed files (does not remove your config/baselines unless you choose to):
+
+```bash
+# Programs
+sudo rm -f /usr/local/sbin/run_full_health_monitor.sh
+sudo rm -f /usr/local/lib/linux_maint.sh
+sudo rm -rf /usr/local/libexec/linux_maint
+
+# (Optional) configuration + baselines
+sudo rm -rf /etc/linux_maint
+
+# (Optional) logs
+sudo rm -rf /var/log/health
+sudo rm -f /var/log/*monitor*.log /var/log/*_monitor.log /var/log/*_check.log /var/log/inventory_export.log
+
+# (Optional) logrotate entry
+sudo rm -f /etc/logrotate.d/linux_maint
 ```
 
 
