@@ -45,7 +45,7 @@ sudo install -d /usr/local/libexec/linux_maint
 sudo install -D -m 0755 \
   backup_check.sh cert_monitor.sh config_drift_monitor.sh health_monitor.sh \
   inode_monitor.sh inventory_export.sh network_monitor.sh nfs_mount_monitor.sh \
-  ntp_drift_monitor.sh patch_monitor.sh storage_health_monitor.sh kernel_events_monitor.sh ports_baseline_monitor.sh \
+  ntp_drift_monitor.sh patch_monitor.sh storage_health_monitor.sh kernel_events_monitor.sh preflight_check.sh disk_trend_monitor.sh ports_baseline_monitor.sh \
   service_monitor.sh user_monitor.sh \
   /usr/local/libexec/linux_maint/
 
@@ -287,6 +287,20 @@ Most defaults below are taken directly from the scripts (current repository vers
 - `CRIT_COUNT` = `5`
 - `PATTERNS` = `'oom-killer|out of memory|killed process|soft lockup|hard lockup|hung task|blocked for more than|I/O error|blk_update_request|Buffer I/O error|EXT4-fs error|XFS \(|btrfs: error|nvme.*timeout|resetting link|ata[0-9].*failed|mce:|machine check'`
 - `EMAIL_ON_ALERT` = `"true"`
+
+### `preflight_check.sh`
+- `REQ_CMDS` = `(bash awk sed grep df ssh)`
+- `OPT_CMDS` = `(openssl ss netstat journalctl smartctl nvme mail timeout)`
+
+### `disk_trend_monitor.sh`
+- `STATE_BASE` = `"/var/lib/linux_maint/disk_trend"`
+- `WARN_DAYS` = `14`
+- `CRIT_DAYS` = `7`
+- `HARD_WARN_PCT` = `90`
+- `HARD_CRIT_PCT` = `95`
+- `MIN_POINTS` = `2`
+- `EXCLUDE_FSTYPES_RE` = `'^(tmpfs|devtmpfs|overlay|squashfs|proc|sysfs|cgroup2?|debugfs|rpc_pipefs|autofs|devpts|mqueue|hugetlbfs|fuse\..*|binfmt_misc|pstore|nsfs)$'`
+- `EXCLUDE_MOUNTS_FILE` = `"/etc/linux_maint/disk_trend_exclude_mounts.txt"`
 
 ### `nfs_mount_monitor.sh`
 - `NFS_STAT_TIMEOUT` = `5`

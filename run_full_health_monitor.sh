@@ -40,8 +40,10 @@ export LM_EMAIL_ENABLED="${LM_EMAIL_ENABLED:-false}"
 # Avoid overlaps by excluding disk_monitor/process_hog/server_info.
 
 declare -a scripts=(
+  "preflight_check.sh"
   "health_monitor.sh"
   "inode_monitor.sh"
+  "disk_trend_monitor.sh"
   "network_monitor.sh"
   "service_monitor.sh"
   "ntp_drift_monitor.sh"
