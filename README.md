@@ -18,7 +18,7 @@
 - [Configuration files under `/etc/linux_maint/`](#configuration-files-under-etclinux_maint)
 - [Optional monitors: enablement examples](#optional-monitors-enablement-examples)
 - [Quick manual run](#quick-manual-run)
-- [Air-gapped / offline installation](#air-gapped--offline-installation)
+- [Air-gapped / offline installation](#air-gapped-offline-installation)
 - [Development / CI](#development-ci)
 - [Developer hooks (optional)](#developer-hooks-optional)
 - [Uninstall](#uninstall)
