@@ -135,6 +135,30 @@ To enable email for scheduled runs, set it in your cron or systemd unit:
 LM_EMAIL_ENABLED=true /usr/local/sbin/run_full_health_monitor.sh
 ```
 
+
+## Optional packages for full coverage (recommended on bare metal)
+
+Some monitors provide best results when these tools are installed:
+- `storage_health_monitor.sh`: `smartctl` (smartmontools) and `nvme` (nvme-cli)
+
+Install examples:
+
+### RHEL / CentOS / Rocky / Alma / Fedora
+```bash
+sudo dnf install -y smartmontools nvme-cli
+```
+
+### Debian / Ubuntu
+```bash
+sudo apt-get update
+sudo apt-get install -y smartmontools nvme-cli
+```
+
+### SUSE / openSUSE
+```bash
+sudo zypper install -y smartmontools nvme-cli
+```
+
 ## Monitor reference (what checks what)
 
 | Script | Purpose | Config required to be useful | Typical WARN/CRIT causes |
