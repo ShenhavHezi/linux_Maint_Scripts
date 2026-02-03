@@ -9,3 +9,4 @@
 
 # optional local config copies
 /etc_linux_maint/
+dist/

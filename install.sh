@@ -104,6 +104,12 @@ install_files(){
   # Directories
   mkdir -p /etc/linux_maint /etc/linux_maint/baselines /var/log/health /var/lib/linux_maint
 
+  # Build/version info (optional; present in offline release tarballs)
+  mkdir -p "$prefix/share/linux_maint"
+  if [ -f "BUILD_INFO" ]; then
+    install -m 0644 BUILD_INFO "$prefix/share/linux_maint/BUILD_INFO"
+  fi
+
   echo "Install complete. Try: $sbin/run_full_health_monitor.sh"
 }
 

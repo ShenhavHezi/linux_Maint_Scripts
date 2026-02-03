@@ -18,6 +18,7 @@
 - [Configuration files under `/etc/linux_maint/`](#configuration-files-under-etclinux_maint)
 - [Optional monitors: enablement examples](#optional-monitors-enablement-examples)
 - [Quick manual run](#quick-manual-run)
+- [Offline releases / version tracking](#offline-releases--version-tracking)
 - [Air-gapped / offline installation](#air-gapped-offline-installation)
 - [Development / CI](#development-ci)
 - [Developer hooks (optional)](#developer-hooks-optional)
@@ -523,6 +524,29 @@ sudo tail -n 200 /var/log/health/full_health_monitor_latest.log
 
 
 
+
+
+## Offline releases / version tracking
+
+For dark-site environments, you can generate a versioned tarball that includes a `BUILD_INFO` file.
+After installation, version info (when present) is stored at:
+
+- `/usr/local/share/linux_maint/BUILD_INFO`
+
+Build a tarball on a connected workstation:
+
+```bash
+./tools/make_tarball.sh
+# output: dist/linux_Maint_Scripts-<version>-<sha>.tgz
+```
+
+Copy the tarball to the offline server, extract, then install:
+
+```bash
+tar -xzf dist/linux_Maint_Scripts-*.tgz
+sudo ./install.sh
+cat /usr/local/share/linux_maint/BUILD_INFO
+```
 
 ## Air-gapped / offline installation
 
