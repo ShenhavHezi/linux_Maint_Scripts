@@ -40,6 +40,99 @@ sudo chmod -R go-w /usr/local/libexec/linux_maint
 ```
 
 
+## Recommended operating model
+
+This project is designed as a **daily (or hourly) health check + drift detection toolkit**.
+The most common deployment is a single *monitoring node* that connects to one or more Linux hosts over SSH,
+collects signals, and writes an aggregated run log.
+
+- Primary use: scheduled execution via **cron** or a **systemd timer**
+- Output: per-script logs under `/var/log/` and an aggregated wrapper log under `/var/log/health/`
+- Automation: wrapper exit code reflects the worst status across monitors (`OK/WARN/CRIT/UNKNOWN`)
+
+## Distributed mode (recommended)
+
+1. Choose a monitoring node (can be one of your servers).
+2. Create a dedicated user on the monitoring node (and optionally on targets): `linuxmaint`.
+3. Configure SSH keys so the monitoring node can reach each target without prompts.
+4. Populate `/etc/linux_maint/servers.txt` on the monitoring node.
+
+### SSH key setup (example)
+
+```bash
+# On the monitoring node
+sudo useradd -r -m -s /bin/bash linuxmaint || true
+sudo -u linuxmaint ssh-keygen -t ed25519 -N '' -f /home/linuxmaint/.ssh/id_ed25519
+
+# Copy key to each target host (repeat per host)
+sudo -u linuxmaint ssh-copy-id linuxmaint@server-a
+```
+
+If you prefer not to create `linuxmaint` on target hosts, you can SSH as an existing user with the required permissions.
+
+## Least privilege / sudo (recommended)
+
+Some checks may require elevated privileges (examples: service status on some distros, reading certain logs,
+collecting process names for listening ports, package manager queries).
+
+Recommended approach:
+- Run the wrapper as root **on the monitoring node** *or*
+- Run as `linuxmaint` and allow limited sudo as needed.
+
+Example `/etc/sudoers.d/linux_maint` (review and tighten for your environment):
+
+```sudoers
+# Allow linuxmaint to run specific commands without a password
+linuxmaint ALL=(root) NOPASSWD: /usr/bin/systemctl
+linuxmaint ALL=(root) NOPASSWD: /usr/sbin/ss, /bin/ss
+linuxmaint ALL=(root) NOPASSWD: /usr/bin/journalctl
+linuxmaint ALL=(root) NOPASSWD: /usr/bin/apt, /usr/bin/apt-get, /usr/bin/dnf, /usr/bin/yum, /usr/bin/zypper
+```
+
+Notes:
+- Paths vary by distro; adjust accordingly.
+- If you run everything as root (cron/systemd), you may not need sudo at all.
+
+## Alerting model (email)
+
+Email is **disabled by default** for safe first deployment.
+
+- Global toggle: `LM_EMAIL_ENABLED` (exported by the wrapper)
+  - `false` (default): do not send mail
+  - `true`: allow scripts to send alerts
+
+Per-script flags (examples):
+- `EMAIL_ON_ALERT`, `EMAIL_ON_CHANGE`, `EMAIL_ON_DRIFT`, `EMAIL_ON_ISSUE`
+
+Recommended workflow:
+1. Deploy and tune config/baselines first.
+2. Enable email only after you are satisfied with noise level.
+
+To enable email for scheduled runs, set it in your cron or systemd unit:
+
+```bash
+LM_EMAIL_ENABLED=true /usr/local/sbin/run_full_health_monitor.sh
+```
+
+## Monitor reference (what checks what)
+
+| Script | Purpose | Config required to be useful | Typical WARN/CRIT causes |
+|---|---|---|---|
+| `health_monitor.sh` | CPU/mem/load/disk/top snapshot | none | low disk, load spikes, memory pressure |
+| `inode_monitor.sh` | inode utilization thresholds | optional thresholds/excludes | inode exhaustion |
+| `network_monitor.sh` | ping/tcp/http checks | `network_targets.txt` | packet loss, TCP connect fail, HTTP latency/status |
+| `service_monitor.sh` | service health (systemd) | `services.txt` | inactive/failed services |
+| `ntp_drift_monitor.sh` | time sync health | none | unsynced clock, high offset |
+| `patch_monitor.sh` | pending updates/reboot hints | none | security updates pending, reboot required |
+| `cert_monitor.sh` | certificate expiry | `certs.txt` | expiring/expired certs, verify failures |
+| `nfs_mount_monitor.sh` | NFS mounted + responsive | none | stale/unresponsive mounts |
+| `ports_baseline_monitor.sh` | port drift vs baseline | `ports_baseline.txt` (gate) | new/removed listening ports |
+| `config_drift_monitor.sh` | config drift vs baseline | `config_paths.txt` | changed hashes vs baseline |
+| `user_monitor.sh` | user/sudoers drift + SSH failures | baseline inputs | new users, sudoers changed, brute-force attempts |
+| `backup_check.sh` | backup freshness/integrity | `backup_targets.csv` | old/missing/small/corrupt backups |
+| `inventory_export.sh` | HW/SW inventory CSV | none | collection failures |
+
+
 ## Installed file layout (recommended)
 
 ```text
