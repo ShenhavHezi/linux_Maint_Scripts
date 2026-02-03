@@ -160,6 +160,19 @@ LM_EMAIL_ENABLED=true /usr/local/sbin/run_full_health_monitor.sh
 Some monitors provide best results when these tools are installed:
 - `storage_health_monitor.sh`: `smartctl` (smartmontools) and `nvme` (nvme-cli)
 
+
+### Vendor RAID controller tooling (optional)
+
+On some bare-metal servers, SMART data is hidden behind a hardware RAID controller.
+If you want controller-level health (virtual disk state, predictive failures, rebuilds), install the appropriate vendor CLI.
+`storage_health_monitor.sh` will auto-detect and use these tools when available:
+
+- `storcli` / `perccli` (Broadcom/LSI MegaRAID family)
+- `ssacli` (HPE Smart Array)
+- `omreport` (Dell OMSA)
+
+If none are installed, the monitor reports controller status as `ctrl=NA()` and continues with mdraid/SMART/NVMe checks.
+
 Install examples:
 
 ### RHEL / CentOS / Rocky / Alma / Fedora
