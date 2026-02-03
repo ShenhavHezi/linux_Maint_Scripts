@@ -232,7 +232,9 @@ run_for_host(){
 
   rm -f "$cur_file"
 
-  echo config_drift_monitor host=$host status=$([ $((modified+added+removed)) -gt 0 ] && echo WARN || echo OK) modified=$modified added=$added removed=$removed
+  total_changes=$((modified+added+removed))
+  status=$( [ "$total_changes" -gt 0 ] && echo WARN || echo OK )
+  echo "config_drift_monitor host=$host status=$status modified=$modified added=$added removed=$removed"
 
   lm_info "===== Completed $host ====="
 }

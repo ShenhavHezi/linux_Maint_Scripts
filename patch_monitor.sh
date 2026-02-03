@@ -39,7 +39,7 @@ remote_pkg_mgr() {
 
 remote_os() {
   local host="$1"
-  lm_ssh "$host" 'source /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || uname -sr'
+  lm_ssh "$host" bash -lc 'source /etc/os-release 2>/dev/null && echo "$PRETTY_NAME" || uname -sr'
 }
 
 # ---- Per-manager probes (echo: "total security kernel") ----
@@ -120,7 +120,7 @@ run_for_host() {
 
   local total=0 sec=0 kern=0
   case "$mgr" in
-    apt)    read total sec kern <<<"$(probe_apt "$host")" ;;
+    apt)    read -r total sec kern <<<"$(probe_apt "$host")" ;;
     dnf)    read total sec kern <<<"$(probe_dnf "$host")" ;;
     yum)    read total sec kern <<<"$(probe_yum "$host")" ;;
     zypper) read total sec kern <<<"$(probe_zypper "$host")" ;;

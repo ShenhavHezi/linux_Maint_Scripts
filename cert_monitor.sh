@@ -179,7 +179,9 @@ while IFS= read -r raw; do
   fi
 done < "$TARGETS_FILE"
 
-echo cert_monitor summary status=$([ ${crit:-0} -gt 0 ] && echo CRIT || ([ ${warn:-0} -gt 0 ] && echo WARN || echo OK)) checked=${checked:-0} warn=${warn:-0} crit=${crit:-0}
+overall="OK"
+if [ ${crit:-0} -gt 0 ]; then overall="CRIT"; elif [ ${warn:-0} -gt 0 ]; then overall="WARN"; fi
+echo "cert_monitor summary status=$overall checked=${checked:-0} warn=${warn:-0} crit=${crit:-0}"
 
 alerts="$(cat "$ALERTS_FILE" 2>/dev/null)"
 rm -f "$ALERTS_FILE" 2>/dev/null || true

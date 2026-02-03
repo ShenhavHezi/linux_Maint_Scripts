@@ -182,8 +182,14 @@ run_for_host() {
   lm_info "===== Completed $host ====="
 
   local overall=OK
-  [ $crit_count -gt 0 ] && overall=CRIT || { [ $warn_count -gt 0 ] && overall=WARN || true; }
-  echo ntp_drift_monitor host=$host status=$overall checked=$checked warn=$warn_count crit=$crit_count
+  if [ "$crit_count" -gt 0 ]; then
+    overall=CRIT
+  elif [ "$warn_count" -gt 0 ]; then
+    overall=WARN
+  else
+    overall=OK
+  fi
+  echo "ntp_drift_monitor host=$host status=$overall checked=$checked warn=$warn_count crit=$crit_count"
 
 }
 # ========================

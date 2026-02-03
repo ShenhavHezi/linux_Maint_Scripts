@@ -90,7 +90,13 @@ lm_hosts() {
 
 # ========= Timeout wrapper =========
 # Usage: lm_timeout 5s bash -lc 'df -h'
-lm_timeout() { command -v timeout >/dev/null && timeout "$@" || bash -lc "${*:2}"; }
+lm_timeout() {
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$@"
+  else
+    bash -lc "${*:2}"
+  fi
+}
 
 # ========= CSV row selector (common pattern) =========
 # Prints rows from CSV where column1 matches $2 or "*" and has at least $3 columns.

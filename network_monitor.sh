@@ -217,7 +217,8 @@ run_for_host(){
   lm_info "===== Completed $host ====="
   local failures=0
   failures=$( [ -f "$ALERTS_FILE" ] && wc -l < "$ALERTS_FILE" 2>/dev/null || echo 0 )
-  echo network_monitor host=$host status=$([ $failures -gt 0 ] && echo CRIT || echo OK) checked=$checked failures=$failures
+  status=$( [ "$failures" -gt 0 ] && echo CRIT || echo OK )
+  echo "network_monitor host=$host status=$status checked=$checked failures=$failures"
 
 }
 # ========================

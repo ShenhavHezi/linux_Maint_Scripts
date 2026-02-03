@@ -71,7 +71,11 @@ validate_backup(){
     NF==0 {next}
     NF<5 {print NR":"$0}
   ' "$f" | head -n 5)
-  [ -n "$bad" ] && cr "backup_targets rows with <5 columns: $bad" || ok "backup_targets format looks OK: $f"
+  if [ -n "$bad" ]; then
+    cr "backup_targets rows with <5 columns: $bad"
+  else
+    ok "backup_targets format looks OK: $f"
+  fi
 }
 
 validate_certs(){
@@ -93,7 +97,11 @@ validate(){
   check_list "$CFG_DIR/config_paths.txt" "config_paths"
 
   # gates
-  [ -s "$CFG_DIR/ports_baseline.txt" ] && ok "ports_baseline gate present" || wa "ports_baseline gate missing: $CFG_DIR/ports_baseline.txt"
+  if [ -s "$CFG_DIR/ports_baseline.txt" ]; then
+    ok "ports_baseline gate present"
+  else
+    wa "ports_baseline gate missing: $CFG_DIR/ports_baseline.txt"
+  fi
 
   if [ "$crit" -gt 0 ]; then
     echo "config_validate status=CRIT warn=$warn crit=$crit"
