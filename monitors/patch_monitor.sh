@@ -148,9 +148,8 @@ Reboot required: $reboot
 This is an automated notice from patch_monitor.sh."
     mail_if_enabled "$MAIL_SUBJECT_PREFIX $subj" "$body"
   fi
-  lm_summary "patch_monitor" "$status" host=$host total=${total:-0} security=${sec:-0} kernel=${kern:-0} reboot_required=$reboot
+  lm_summary "patch_monitor" "$host" "$status" total=${total:-0} security=${sec:-0} kernel=${kern:-0} reboot_required=$reboot
   # legacy (kept for backward compatibility)
-  # echo patch_monitor host=$host status=$status total=${total:-0} security=${sec:-0} kernel=${kern:-0} reboot_required=$reboot
 
 
 

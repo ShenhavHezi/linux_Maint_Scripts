@@ -158,11 +158,15 @@ lm_for_each_host() {
 # Prints a single machine-parseable line.
 # Example:
 #   lm_summary "patch_monitor" "WARN" total=5 security=2 reboot_required=unknown
+# ========= Standard summary line =========
+# Usage: lm_summary <monitor_name> <target_host> <status> [key=value ...]
+# Prints a single machine-parseable line.
+# Example:
+#   lm_summary "patch_monitor" "$host" "WARN" total=5 security=2 reboot_required=unknown
 lm_summary() {
-  local monitor="$1" status="$2"; shift 2
-  local host
-  host="$(hostname -f 2>/dev/null || hostname)"
-
+  local monitor="$1" target_host="$2" status="$3"; shift 3
+  local node
+  node="$(hostname -f 2>/dev/null || hostname)"
   # shellcheck disable=SC2086
-  echo "monitor=${monitor} host=${host} status=${status} $*" | sed 's/[[:space:]]\+/ /g; s/[[:space:]]$//'
+  echo "monitor=${monitor} host=${target_host} status=${status} node=${node} $*" | sed "s/[[:space:]]\+/ /g; s/[[:space:]]$//"
 }
