@@ -14,6 +14,7 @@
 - [Tuning knobs (common configuration variables)](#tuning-knobs-common-configuration-variables)
 - [Exit codes (for automation)](#exit-codes-for-automation)
 - [Installed file layout (recommended)](#installed-file-layout-recommended)
+- [CLI usage (`linux-maint`)](#cli-usage-linux-maint)
 - [What runs in the nightly "full package" (cron)](#what-runs-in-the-nightly-full-package-cron)
 - [Configuration files under `/etc/linux_maint/`](#configuration-files-under-etclinux_maint)
 - [Optional monitors: enablement examples](#optional-monitors-enablement-examples)
@@ -344,6 +345,55 @@ The wrapper returns the **worst** exit code across all executed monitors.
 
 ## Installed file layout (recommended)
 
+## CLI usage (`linux-maint`)
+
+After installation, use the `linux-maint` CLI as the primary interface.
+
+
+
+### Commands
+
+
+
+- `linux-maint run` *(root required)*: run the full wrapper (`run_full_health_monitor.sh`).
+
+- `linux-maint status` *(root required)*: show the last run summary + recent WARN/CRIT/SKIP lines.
+
+- `linux-maint logs [n]` *(root required)*: tail the latest wrapper log (default `n=200`).
+
+- `linux-maint preflight` *(root recommended)*: check dependencies/SSH/config readiness.
+
+- `linux-maint validate` *(root recommended)*: validate `/etc/linux_maint` config file formats (best-effort).
+
+- `linux-maint version`: show installed `BUILD_INFO` (if present).
+
+- `linux-maint install [args]`: run `./install.sh` from a checkout (pass-through).
+
+- `linux-maint uninstall [args]`: run `./install.sh --uninstall` from a checkout (pass-through).
+
+- `linux-maint make-tarball`: build an offline tarball (see below).
+
+
+
+### Environment
+
+
+
+- `PREFIX` (default: `/usr/local`) overrides installed locations.
+
+
+
+### Root requirement
+
+
+
+Installed mode writes logs/locks under `/var/log` and `/var/lock` and may require privileged access for some checks.
+
+Use `sudo linux-maint <command>` when in doubt.
+
+
+
+
 ```text
 /usr/local/sbin/run_full_health_monitor.sh
 /usr/local/lib/linux_maint.sh
@@ -534,6 +584,8 @@ sudo tail -n 200 /var/log/health/full_health_monitor_latest.log
 
 
 ## Offline releases / version tracking
+
+For a step-by-step guide, see: `docs/DARK_SITE.md`.
 
 For dark-site environments, you can generate a versioned tarball that includes a `BUILD_INFO` file.
 After installation, version info (when present) is stored at:

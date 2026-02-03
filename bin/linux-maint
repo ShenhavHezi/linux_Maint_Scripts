@@ -113,10 +113,16 @@ case "$cmd" in
     ;;
 
   preflight)
+    if [[ "$MODE" == "installed" ]]; then
+      need_root
+    fi
     exec bash "$preflight"
     ;;
 
   validate)
+    if [[ "$MODE" == "installed" ]]; then
+      need_root
+    fi
     exec bash "$validate"
     ;;
 
