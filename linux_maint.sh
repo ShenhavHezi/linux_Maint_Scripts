@@ -32,7 +32,8 @@ lm_ts() { date '+%Y-%m-%d %H:%M:%S'; }
 # lm_log LEVEL MSG...
 lm_log() {
   local lvl="$1"; shift
-  local line="$(lm_ts) - ${LM_PREFIX}${lvl} - $*"
+  local line
+  line="$(lm_ts) - ${LM_PREFIX}${lvl} - $*"
   # print to stdout and append to LM_LOGFILE (create parent dir if needed)
   mkdir -p "$(dirname "$LM_LOGFILE")" 2>/dev/null || true
   echo "$line" | tee -a "$LM_LOGFILE" >/dev/null

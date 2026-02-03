@@ -89,7 +89,7 @@ run_for_host(){
       for(i=1;i<=NF;i++){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i) }
       if($1==H || $1=="*"){ print $0 }
     }' "$TARGETS" |
-  while IFS=',' read -r h pattern min_mb max_age_h verify; do
+  while IFS=',' read -r _h pattern min_mb max_age_h verify; do
     [ -z "$pattern" ] && continue
 
     # Pull latest file

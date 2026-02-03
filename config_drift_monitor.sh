@@ -160,7 +160,9 @@ compare_and_report(){
   # Email summary if there were changes
   if [ "$changes" -eq 1 ]; then
     local subj="Config drift detected on $host"
-    local body="Host: $host
+    local body
+    body="Host: $host
+"
 
 MODIFIED:
 $( [ -s "$modified_filtered" ] && awk -F'|' '{printf "  * %s (old:%s new:%s)\n",$1,$2,$3}' "$modified_filtered" || echo "  (none)")

@@ -24,6 +24,7 @@ lm_require_singleton "storage_health_monitor"
 MAIL_SUBJECT_PREFIX='[Storage Health Monitor]'
 EMAIL_ON_ISSUE="true"
 
+# shellcheck disable=SC2034  # used inside remote heredoc
 SMARTCTL_TIMEOUT_SECS=10
 MAX_SMART_DEVICES=32
 
