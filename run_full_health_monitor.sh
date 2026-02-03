@@ -41,6 +41,7 @@ export LM_EMAIL_ENABLED="${LM_EMAIL_ENABLED:-false}"
 
 declare -a scripts=(
   "preflight_check.sh"
+  "config_validate.sh"
   "health_monitor.sh"
   "inode_monitor.sh"
   "disk_trend_monitor.sh"

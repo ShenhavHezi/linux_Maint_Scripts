@@ -31,6 +31,7 @@
 ## Installation (recommended Linux paths)
 
 This layout matches common Linux conventions:
+- CLI entrypoint: `/usr/local/bin/linux-maint`
 - Wrapper (entrypoint): `/usr/local/sbin/run_full_health_monitor.sh`
 - Scripts (monitors): `/usr/local/libexec/linux_maint/`
 - Shared library: `/usr/local/lib/linux_maint.sh`
@@ -49,7 +50,7 @@ sudo install -d /usr/local/libexec/linux_maint
 sudo install -D -m 0755 \
   backup_check.sh cert_monitor.sh config_drift_monitor.sh health_monitor.sh \
   inode_monitor.sh inventory_export.sh network_monitor.sh nfs_mount_monitor.sh \
-  ntp_drift_monitor.sh patch_monitor.sh storage_health_monitor.sh kernel_events_monitor.sh preflight_check.sh disk_trend_monitor.sh ports_baseline_monitor.sh \
+  ntp_drift_monitor.sh patch_monitor.sh storage_health_monitor.sh kernel_events_monitor.sh preflight_check.sh disk_trend_monitor.sh config_validate.sh ports_baseline_monitor.sh \
   service_monitor.sh user_monitor.sh \
   /usr/local/libexec/linux_maint/
 

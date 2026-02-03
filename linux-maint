@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# linux-maint - CLI entrypoint for Linux_Maint_Scripts
+
+set -euo pipefail
+
+PREFIX="${PREFIX:-/usr/local}"
+SBIN="$PREFIX/sbin"
+LIBEXEC="$PREFIX/libexec/linux_maint"
+SHARE="$PREFIX/share/linux_maint"
+
+wrapper="$SBIN/run_full_health_monitor.sh"
+
+usage(){
+  cat <<EOF
+Usage: linux-maint <command> [args]
+
+Commands:
+  run                 Run the full package (wrapper)
+  status              Show last run status + recent WARN/CRIT lines
+  validate            Validate config file formats (best-effort)
+  preflight           Run preflight checks
+  version             Print installed BUILD_INFO (if present)
+  logs [n]            Tail latest wrapper log (default n=200)
+  help                Show this help
+
+Environment:
+  PREFIX=/usr/local    installation prefix override
+EOF
+}
+
+cmd="${1:-help}"; shift || true
+
+case "$cmd" in
+  help|-h|--help)
+    usage
+    ;;
+
+  run)
+    exec sudo -n "$wrapper" 2>/dev/null || exec "$wrapper"
+    ;;
+
+  logs)
+    n="${1:-200}"
+    exec sudo -n tail -n "$n" /var/log/health/full_health_monitor_latest.log 2>/dev/null || tail -n "$n" /var/log/health/full_health_monitor_latest.log
+    ;;
+
+  version)
+    if [ -f "$SHARE/BUILD_INFO" ]; then
+      cat "$SHARE/BUILD_INFO"
+    else
+      echo "BUILD_INFO not found at $SHARE/BUILD_INFO"
+      exit 1
+    fi
+    ;;
+
+  preflight)
+    exec "$LIBEXEC/preflight_check.sh"
+    ;;
+
+  validate)
+    exec "$LIBEXEC/config_validate.sh"
+    ;;
+
+  status)
+    status_file="/var/log/health/last_status_full"
+    echo "=== Installed ==="
+    echo "wrapper: $wrapper"
+    echo "libexec: $LIBEXEC"
+    echo "build_info: $SHARE/BUILD_INFO"
+    [ -f "$SHARE/BUILD_INFO" ] && { echo ""; cat "$SHARE/BUILD_INFO"; }
+
+    echo ""; echo "=== Last run status ==="
+    if [ -f "$status_file" ]; then
+      cat "$status_file"
+    else
+      echo "No status file: $status_file"
+    fi
+
+    echo ""; echo "=== Recent WARN/CRIT/UNKNOWN lines (latest log) ==="
+    log="/var/log/health/full_health_monitor_latest.log"
+    if [ -f "$log" ]; then
+      egrep ' status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT' "$log" | tail -n 80 || true
+    else
+      echo "No log: $log"
+    fi
+    ;;
+
+  *)
+    echo "Unknown command: $cmd" >&2
+    usage
+    exit 2
+    ;;
+esac

@@ -86,6 +86,7 @@ install_files(){
 
   install -D -m 0755 linux_maint.sh "$lib/linux_maint.sh"
   install -D -m 0755 run_full_health_monitor.sh "$sbin/run_full_health_monitor.sh"
+  install -D -m 0755 linux-maint "$prefix/bin/linux-maint"
   install -d "$libexec"
 
   # Explicit monitors list (exclude wrapper + lib)
@@ -93,7 +94,7 @@ install_files(){
     backup_check.sh cert_monitor.sh config_drift_monitor.sh health_monitor.sh \
     inode_monitor.sh inventory_export.sh network_monitor.sh nfs_mount_monitor.sh \
     ntp_drift_monitor.sh patch_monitor.sh storage_health_monitor.sh kernel_events_monitor.sh \
-    preflight_check.sh disk_trend_monitor.sh \
+    preflight_check.sh disk_trend_monitor.sh config_validate.sh \
     ports_baseline_monitor.sh service_monitor.sh user_monitor.sh \
     "$libexec/"
 
