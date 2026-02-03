@@ -9,7 +9,7 @@ if ! command -v shellcheck >/dev/null 2>&1; then
   echo "shellcheck not found. Install it (e.g. apt-get install shellcheck / dnf install ShellCheck)" >&2
   exit 1
 fi
-shellcheck -x *.sh install.sh
+shellcheck -x -- ./*.sh ./install.sh ./linux-maint ./tools/*.sh
 
 echo "[pre-commit] Verifying README tuning knobs are in sync..."
 python3 tools/update_readme_defaults.py

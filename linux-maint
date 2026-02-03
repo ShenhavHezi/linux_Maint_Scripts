@@ -82,7 +82,7 @@ case "$cmd" in
     echo ""; echo "=== Recent WARN/CRIT/UNKNOWN lines (latest log) ==="
     log="/var/log/health/full_health_monitor_latest.log"
     if [ -f "$log" ]; then
-      egrep ' status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT' "$log" | tail -n 80 || true
+      grep -E ' status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT' "$log" | tail -n 80 || true
     else
       echo "No log: $log"
     fi
