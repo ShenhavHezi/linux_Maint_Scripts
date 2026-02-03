@@ -121,7 +121,9 @@ run_for_host(){
   lm_info "===== Completed $host ====="
 
   status=$( [ "$fail_count" -gt 0 ] && echo CRIT || echo OK )
-  echo "service_monitor host=$host status=$status checked=$checked failures=$fail_count"
+  lm_summary "service_monitor" "$host" "$status" checked=$checked failures=$fail_count
+  # legacy:
+  # echo "service_monitor host=$host status=$status checked=$checked failures=$fail_count"
 
 }
 # ========================

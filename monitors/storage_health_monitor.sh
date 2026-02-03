@@ -167,7 +167,9 @@ run_for_host(){
   if ! lm_reachable "$host"; then
     lm_err "[$host] SSH unreachable"
     append_alert "$host|ssh|unreachable"
-    echo "storage_health_monitor host=$host status=CRIT mdraid=? smart=? nvme=?"
+    lm_summary "storage_health_monitor" "$host" "CRIT" mdraid=? smart=? nvme=?
+    # legacy:
+    # echo "storage_health_monitor host=$host status=CRIT mdraid=? smart=? nvme=?"
     return 2
   fi
 
@@ -177,7 +179,9 @@ run_for_host(){
   if [ -z "$out" ]; then
     lm_warn "[$host] unable to collect storage health"
     append_alert "$host|collect|failed"
-    echo "storage_health_monitor host=$host status=UNKNOWN"
+    lm_summary "storage_health_monitor" "$host" "UNKNOWN"
+    # legacy:
+    # echo "storage_health_monitor host=$host status=UNKNOWN"
     return 3
   fi
 
@@ -199,7 +203,9 @@ ctrl=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="ctrl") print $(i
     append_alert "$host|storage|mdraid=$md smart=$smart($smart_bad/$smart_checked) nvme=$nvme($nvme_bad/$nvme_checked)"
   fi
 
-  echo "storage_health_monitor host=$host status=$overall mdraid=$md smart=$smart checked=$smart_checked bad=$smart_bad nvme=$nvme checked_nvme=$nvme_checked bad_nvme=$nvme_bad ctrl=$ctrl"
+  lm_summary "storage_health_monitor" "$host" "$overall" mdraid=$md smart=$smart checked=$smart_checked bad=$smart_bad nvme=$nvme checked_nvme=$nvme_checked bad_nvme=$nvme_bad ctrl=$ctrl
+  # legacy:
+  # echo "storage_health_monitor host=$host status=$overall mdraid=$md smart=$smart checked=$smart_checked bad=$smart_bad nvme=$nvme checked_nvme=$nvme_checked bad_nvme=$nvme_bad ctrl=$ctrl"
   return "$rc"
 }
 
