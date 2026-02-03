@@ -8,6 +8,7 @@
 - [Distributed mode (recommended)](#distributed-mode-recommended)
 - [Least privilege / sudo (recommended)](#least-privilege-sudo-recommended)
 - [Alerting model (email)](#alerting-model-email)
+- [Optional packages for full coverage (recommended on bare metal)](#optional-packages-for-full-coverage-recommended-on-bare-metal)
 - [Monitor reference (what checks what)](#monitor-reference-what-checks-what)
 - [Tuning knobs (common configuration variables)](#tuning-knobs-common-configuration-variables)
 - [Exit codes (for automation)](#exit-codes-for-automation)
