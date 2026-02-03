@@ -42,16 +42,16 @@ git clone https://github.com/ShenhavHezi/linux_Maint_Scripts.git
 cd linux_Maint_Scripts
 
 # Install
-sudo install -D -m 0755 linux_maint.sh /usr/local/lib/linux_maint.sh
+sudo install -D -m 0755 lib/linux_maint.sh /usr/local/lib/linux_maint.sh
 sudo install -D -m 0755 run_full_health_monitor.sh /usr/local/sbin/run_full_health_monitor.sh
 sudo install -d /usr/local/libexec/linux_maint
 
 # Install monitor scripts (exclude the wrapper)
 sudo install -D -m 0755 \
-  backup_check.sh cert_monitor.sh config_drift_monitor.sh health_monitor.sh \
-  inode_monitor.sh inventory_export.sh network_monitor.sh nfs_mount_monitor.sh \
-  ntp_drift_monitor.sh patch_monitor.sh storage_health_monitor.sh kernel_events_monitor.sh preflight_check.sh disk_trend_monitor.sh config_validate.sh ports_baseline_monitor.sh \
-  service_monitor.sh user_monitor.sh \
+  monitors/backup_check.sh monitors/cert_monitor.sh monitors/config_drift_monitor.sh monitors/health_monitor.sh \
+  monitors/inode_monitor.sh monitors/inventory_export.sh monitors/network_monitor.sh monitors/nfs_mount_monitor.sh \
+  monitors/ntp_drift_monitor.sh monitors/patch_monitor.sh monitors/storage_health_monitor.sh monitors/kernel_events_monitor.sh monitors/preflight_check.sh monitors/disk_trend_monitor.sh monitors/config_validate.sh monitors/ports_baseline_monitor.sh \
+  monitors/service_monitor.sh monitors/user_monitor.sh \
   /usr/local/libexec/linux_maint/
 
 # Create config/log directories
@@ -516,6 +516,12 @@ sudo /usr/local/sbin/run_full_health_monitor.sh
 
 
 ## Quick manual run
+
+### Installed mode requires root (recommended)
+
+The installed tool writes logs/locks under `/var/log` and `/var/lock` and may need privileged access for some checks.
+Run the wrapper/CLI via `sudo`, cron, or a systemd timer.
+
 Run the full package now:
 
 ```bash
@@ -660,9 +666,9 @@ To upgrade on a node where you installed using the recommended paths:
 cd /path/to/linux_Maint_Scripts
 git pull
 
-sudo install -D -m 0755 linux_maint.sh /usr/local/lib/linux_maint.sh
+sudo install -D -m 0755 lib/linux_maint.sh /usr/local/lib/linux_maint.sh
 sudo install -D -m 0755 run_full_health_monitor.sh /usr/local/sbin/run_full_health_monitor.sh
-sudo install -D -m 0755 *.sh /usr/local/libexec/linux_maint/
+sudo install -D -m 0755 monitors/*.sh /usr/local/libexec/linux_maint/
 ```
 
 After upgrading:
