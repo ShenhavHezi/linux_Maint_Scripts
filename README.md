@@ -90,7 +90,7 @@ Templates are in `etc/linux_maint/*.example`; installed configs live in `/etc/li
 
 - `servers.txt` — target hosts for SSH mode
 - `services.txt` — services to verify
-- `network_targets.csv` — optional reachability checks
+- `network_targets.txt` — optional reachability checks
 
 ## How to read results
 
@@ -98,6 +98,17 @@ Templates are in `etc/linux_maint/*.example`; installed configs live in `/etc/li
 - Logs:
   - Aggregated: `/var/log/health/` (installed mode)
   - Per-monitor: `/var/log/` (or overridden via `LM_LOGFILE`)
+
+### Artifacts produced (installed mode)
+
+The wrapper writes both a full log and summary artifacts you can parse/ship to monitoring:
+
+- Full run log: `/var/log/health/full_health_monitor_<timestamp>.log` + `full_health_monitor_latest.log`
+- Summary (only `monitor=` lines): `/var/log/health/full_health_monitor_summary_<timestamp>.log` + `full_health_monitor_summary_latest.log`
+- Summary JSON: `..._summary_<timestamp>.json` + `..._summary_latest.json`
+- Prometheus textfile (optional): `/var/lib/node_exporter/textfile_collector/linux_maint.prom`
+
+See the full contract and artifact details in [`docs/reference.md`](docs/reference.md#output-contract-machine-parseable-summary-lines).
 
 ### Summary contract (for automation)
 
@@ -110,6 +121,7 @@ monitor=<name> host=<target> status=<OK|WARN|CRIT|UNKNOWN|SKIP> node=<runner> ke
 Notes:
 - For non-`OK` statuses, monitors typically include a `reason=<token>` key (e.g. `ssh_unreachable`, `baseline_missing`, `collect_failed`).
 - Full contract details and artifact locations are documented in [`docs/reference.md`](docs/reference.md#output-contract-machine-parseable-summary-lines).
+- `SKIP` means the monitor intentionally did not evaluate (e.g., missing optional config/baseline).
 
 ## Common knobs
 
