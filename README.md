@@ -91,6 +91,18 @@ monitor=<name> host=<target> status=<OK|WARN|CRIT|UNKNOWN|SKIP> node=<runner> ke
 
 ## Common knobs
 
+### Optional email notification (single summary per run)
+
+Create `/etc/linux_maint/notify.conf`:
+
+```bash
+LM_NOTIFY=1
+LM_NOTIFY_TO="ops@company.com"
+LM_NOTIFY_ONLY_ON_CHANGE=1
+```
+
+Details in [`docs/reference.md`](docs/reference.md).
+
 - `MONITOR_TIMEOUT_SECS` (default `600`)
 - `LM_EMAIL_ENABLED=false` by default
 - `LM_NOTIFY` (wrapper-level per-run email summary; default `0` / off)
