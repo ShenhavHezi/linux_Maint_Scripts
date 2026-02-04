@@ -109,6 +109,7 @@ The wrapper writes both a full log and summary artifacts you can parse/ship to m
 - Prometheus textfile (optional): `/var/lib/node_exporter/textfile_collector/linux_maint.prom`
 
 See the full contract and artifact details in [`docs/reference.md`](docs/reference.md#output-contract-machine-parseable-summary-lines).
+- The wrapper also emits fleet-accurate counters derived from `monitor=` lines: `SUMMARY_HOSTS ok=.. warn=.. crit=.. unknown=.. skipped=..`.
 
 ### Summary contract (for automation)
 
