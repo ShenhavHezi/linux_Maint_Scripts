@@ -125,12 +125,68 @@ need_root_for(){
 }
 
 
+# ---- run() flags parsing (CLI-first, env-compatible) ----
+# Maps:
+#   --group G        -> LM_GROUP
+#   --hosts a,b      -> LM_SERVERLIST (temp file)
+#   --exclude a,b    -> LM_EXCLUDED (temp file)
+#   --parallel N     -> LM_MAX_PARALLEL
+#   --local-only     -> LM_LOCAL_ONLY=true
+#   --ssh-opts "..." -> LM_SSH_OPTS
+#   --dry-run        -> print resolved hosts and exit
+#
+_run_tmpfiles=()
+cleanup_tmpfiles(){
+  for f in "${_run_tmpfiles[@]:-}"; do rm -f "$f" 2>/dev/null || true; done
+}
+trap cleanup_tmpfiles EXIT
+
+make_list_tmpfile(){
+  local csv="$1" prefix="$2"
+  local f
+  f="$(mktemp "/tmp/linux_maint_${prefix}.XXXXXX")"
+  _run_tmpfiles+=("$f")
+  # split on comma and whitespace
+  echo "$csv" | tr ',' '\n' | awk '{gsub(/^[ \t]+|[ \t]+$/,"",$0); if($0!="") print $0}' > "$f"
+  echo "$f"
+}
+
+parse_run_args(){
+  DRY_RUN=0
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --group)
+        LM_GROUP="$2"; export LM_GROUP; shift 2;;
+      --hosts)
+        tmpf="$(make_list_tmpfile "$2" hosts)"; LM_SERVERLIST="$tmpf"; export LM_SERVERLIST; shift 2;;
+      --exclude)
+        tmpf="$(make_list_tmpfile "$2" excluded)"; LM_EXCLUDED="$tmpf"; export LM_EXCLUDED; shift 2;;
+      --parallel)
+        LM_MAX_PARALLEL="$2"; export LM_MAX_PARALLEL; shift 2;;
+      --local-only)
+        LM_LOCAL_ONLY="true"; export LM_LOCAL_ONLY; shift 1;;
+      --ssh-opts)
+        LM_SSH_OPTS="$2"; export LM_SSH_OPTS; shift 2;;
+      --dry-run)
+        DRY_RUN=1; shift 1;;
+      -h|--help)
+        echo "Usage: linux-maint run [--group G] [--hosts h1,h2] [--exclude h3,h4] [--parallel N] [--local-only] [--ssh-opts '...'] [--dry-run]"
+        exit 0;;
+      *)
+        echo "Unknown run flag: $1" >&2
+        exit 2;;
+    esac
+  done
+}
+
+
 usage(){
   cat <<EOF2
 Usage: linux-maint <command> [args]
 
 Commands:
-  run                 Run the full package (wrapper)
+  run [flags]         Run the full package (wrapper)
   status              Show last run status + recent WARN/CRIT lines
   validate            Validate config file formats (best-effort)
   preflight           Run preflight checks
@@ -159,6 +215,27 @@ case "$cmd" in
   run)
     if [[ "$MODE" == "installed" ]]; then
       need_root_for run
+    fi
+    parse_run_args "$@"
+
+    if [[ "$DRY_RUN" -eq 1 ]]; then
+      # best-effort host resolution using library if available
+      if [[ -n "${LM_GROUP:-}" ]]; then
+        gf="${LM_HOSTS_DIR:-/etc/linux_maint/hosts.d}/${LM_GROUP}.txt"
+        [[ -f "$gf" ]] || echo "NOTE: LM_GROUP=$LM_GROUP but group file not found: $gf (will fall back)" >&2
+      fi
+
+      if [[ -f "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" ]]; then
+        # shellcheck disable=SC1090
+        . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" >/dev/null 2>&1 || true
+        if command -v lm_hosts >/dev/null 2>&1; then
+          echo "Resolved hosts:"
+          lm_hosts
+          exit 0
+        fi
+      fi
+      echo "DRY RUN requested, but cannot resolve hosts (library not available)."
+      exit 0
     fi
     # In installed mode, try sudo -n first. In repo mode, just run.
     if [[ "$wrapper" == "$SBIN"/* ]]; then

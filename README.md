@@ -51,6 +51,14 @@ sudo ./bin/linux-maint status
 
 ### Distributed run (monitoring node)
 
+Example using CLI flags (recommended):
+
+```bash
+sudo linux-maint run --group prod --parallel 10
+# or
+sudo linux-maint run --hosts server-a,server-b --exclude server-c
+```
+
 ```bash
 sudo install -d -m 0755 /etc/linux_maint
 printf '%s
