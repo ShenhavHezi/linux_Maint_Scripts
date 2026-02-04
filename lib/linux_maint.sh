@@ -18,6 +18,8 @@ set -o pipefail
 : "${LM_EMAILS:=/etc/linux_maint/emails.txt}"
 : "${LM_EXCLUDED:=/etc/linux_maint/excluded.txt}"
 : "${LM_SERVERLIST:=/etc/linux_maint/servers.txt}"
+: "${LM_HOSTS_DIR:=/etc/linux_maint/hosts.d}"   # optional host groups directory
+: "${LM_GROUP:=}"                          # optional group name (maps to $LM_HOSTS_DIR/<group>.txt)
 : "${LM_LOCKDIR:=/var/lock}"
 : "${LM_STATE_DIR:=/var/tmp}"
 : "${LM_SSH_OPTS:=-o BatchMode=yes -o ConnectTimeout=7 -o StrictHostKeyChecking=no}"
@@ -88,12 +90,30 @@ lm_reachable() { lm_ssh "$1" "echo ok" | grep -q ok; }
 lm_is_excluded() { [ -f "$LM_EXCLUDED" ] && grep -Fxq "$1" "$LM_EXCLUDED"; }
 # yields hosts to stdout (one per line)
 lm_hosts() {
+  # Host selection precedence:
+  #  1) LM_GROUP=<name> and $LM_HOSTS_DIR/<name>.txt exists
+  #  2) LM_SERVERLIST (default /etc/linux_maint/servers.txt)
+  #  3) fallback: localhost
+
+  local group_file=""
+  if [ -n "${LM_GROUP:-}" ]; then
+    group_file="${LM_HOSTS_DIR:-/etc/linux_maint/hosts.d}/${LM_GROUP}.txt"
+    if [ -f "$group_file" ]; then
+      grep -vE '^[[:space:]]*($|#)' "$group_file"
+      return 0
+    else
+      lm_warn "LM_GROUP set to '${LM_GROUP}' but group file not found: $group_file"
+    fi
+  fi
+
   if [ -f "$LM_SERVERLIST" ]; then
-    grep -v '^[[:space:]]*$' "$LM_SERVERLIST"
+    grep -vE '^[[:space:]]*($|#)' "$LM_SERVERLIST"
   else
     echo "localhost"
   fi
 }
+
+
 
 # ========= Timeout wrapper =========
 # Usage: lm_timeout 5s bash -lc 'df -h'

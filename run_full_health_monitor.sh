@@ -46,7 +46,7 @@ SUMMARY_JSON_FILE="${SUMMARY_JSON_FILE:-$SUMMARY_DIR/full_health_monitor_summary
 PROM_DIR="${PROM_DIR:-/var/lib/node_exporter/textfile_collector}"
 PROM_FILE="${PROM_FILE:-$PROM_DIR/linux_maint.prom}"
 SUMMARY_FILE="${SUMMARY_FILE:-$SUMMARY_DIR/full_health_monitor_summary_$(date +%F_%H%M%S).log}"
-trap 'rm -f "$tmp_report" "$tmp_summary"' EXIT
+trap 'rm -f "$tmp_summary"' EXIT
 
 # Minimal config (local mode)
 mkdir -p /etc/linux_maint
@@ -186,10 +186,45 @@ esac
   # Final status summary: explicitly extract only standardized machine lines.
   # These come from lib/linux_maint.sh: lm_summary() -> lines starting with "monitor=".
   echo "FINAL_STATUS_SUMMARY (monitor= lines only)"
-  grep -a '^monitor=' "$tmp_report" 2>/dev/null || true
+  tmp_mon=$(mktemp /tmp/linux_maint_mon.XXXXXX)
+  grep -a '^monitor=' "$tmp_report" > "$tmp_mon" || true
+  cat "$tmp_mon" 2>/dev/null || true
   echo "============================================================"
 
+# ------------------------
+# HUMAN_STATUS_SUMMARY (ops-friendly)
+# ------------------------
+# Avoid reading+appending to the same file in one block: snapshot monitor lines first.
+_tmp_mon_snapshot=$(mktemp /tmp/linux_maint_mon_snapshot.XXXXXX)
+grep -a '^monitor=' "$tmp_report" > "$_tmp_mon_snapshot" 2>/dev/null || true
+
+_tmp_human=$(mktemp /tmp/linux_maint_human.XXXXXX)
+{
+  echo ""
+  echo "HUMAN_STATUS_SUMMARY"
+  echo "run_host=$(hostname -f 2>/dev/null || hostname)"
+  echo "timestamp=$(date -Is)"
+  echo "overall=$overall exit_code=$worst ok=$ok warn=$warn crit=$crit unknown=$unk skipped=$skipped"
+
+  echo ""
+  echo "Top CRIT/WARN/UNKNOWN (from monitor= lines)"
+  awk '
+    {mon="";host="";st="";msg=""}
+    {for(i=1;i<=NF;i++){split($i,a,"="); if(a[1]=="monitor")mon=a[2]; if(a[1]=="host")host=a[2]; if(a[1]=="status")st=a[2]; if(a[1]=="msg")msg=a[2];}}
+    st=="CRIT" || st=="WARN" || st=="UNKNOWN" {print st ": " host " " mon (msg?" - " msg:"")}
+  ' "$_tmp_mon_snapshot" | head -n 50
+
+  echo ""
+  echo "Logs: $logfile"
+  echo "Summary: $SUMMARY_FILE"
+} > "$_tmp_human"
+
+cat "$_tmp_human" >> "$tmp_report"
+rm -f "$_tmp_human" "$_tmp_mon_snapshot" 2>/dev/null || true
+
+
   cat "$tmp_report"
+
 } | awk '{ print strftime("[%F %T]"), $0 }' | tee "$logfile" >/dev/null
 
 ln -sfn "$logfile" "$LOG_DIR/full_health_monitor_latest.log"
@@ -197,7 +232,9 @@ ln -sfn "$logfile" "$LOG_DIR/full_health_monitor_latest.log"
 # Write a separate, machine-parseable summary file (optional but enabled by default).
 # Contains only "monitor=" lines (no timestamps) so it can be parsed by tools/CI.
 mkdir -p "$SUMMARY_DIR" 2>/dev/null || true
-grep -a '^monitor=' "$tmp_report" > "$tmp_summary" 2>/dev/null || :
+tmp_mon=$(mktemp /tmp/linux_maint_mon.XXXXXX)
+  grep -a '^monitor=' "$tmp_report" > "$tmp_mon" || true
+  cat "$tmp_mon" > "$tmp_summary" 2>/dev/null || :
 cat "$tmp_summary" > "$SUMMARY_FILE" 2>/dev/null || true
 ln -sfn "$SUMMARY_FILE" "$SUMMARY_LATEST_FILE" 2>/dev/null || true
 rm -f "$tmp_summary" 2>/dev/null || true
@@ -256,5 +293,7 @@ PY
   echo "logfile=$logfile"
 } > "$STATUS_FILE"
 chmod 0644 "$STATUS_FILE"
+
+rm -f "$tmp_report" 2>/dev/null || true
 
 exit "$worst"
