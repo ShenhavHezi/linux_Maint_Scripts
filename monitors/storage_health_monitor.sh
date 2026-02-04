@@ -15,7 +15,7 @@ set -euo pipefail
 
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[storage_health] "
-LM_LOGFILE="/var/log/storage_health_monitor.log"
+LM_LOGFILE="${LM_LOGFILE:-/var/log/storage_health_monitor.log}"
 : "${LM_MAX_PARALLEL:=0}"
 : "${LM_EMAIL_ENABLED:=true}"
 

@@ -6,7 +6,7 @@
 # ===== Shared helpers =====
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[ports_baseline] "
-LM_LOGFILE="/var/log/ports_baseline_monitor.log"
+LM_LOGFILE="${LM_LOGFILE:-/var/log/ports_baseline_monitor.log}"
 : "${LM_MAX_PARALLEL:=0}"     # 0=sequential; set >0 to run hosts in parallel
 : "${LM_EMAIL_ENABLED:=true}" # master email toggle
 

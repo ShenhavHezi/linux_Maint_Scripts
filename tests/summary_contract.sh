@@ -31,6 +31,8 @@ export LINUX_MAINT_LIB="$ROOT_DIR/lib/linux_maint.sh"
 export LM_LOCKDIR="/tmp"
 export LM_LOGFILE="/tmp/linux_maint_contract_test.log"
 export LM_EMAIL_ENABLED="false"
+export LM_STATE_DIR="/tmp"
+export LM_SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=3"
 
 fail=0
 for m in "${monitors[@]}"; do
@@ -44,7 +46,7 @@ for m in "${monitors[@]}"; do
   out="$(mktemp)"
   # run best-effort; monitor may exit nonzero due to real system state
   set +e
-  bash "$path" >"$out" 2>&1
+  LM_LOGFILE="/tmp/${m%.sh}.log" bash "$path" >"$out" 2>&1
   rc=$?
   set -e
 
