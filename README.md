@@ -10,6 +10,25 @@ Run it locally or from a monitoring node over SSH, get structured logs + a simpl
 - Works **locally** or **across many hosts** via `/etc/linux_maint/servers.txt`.
 - Produces machine-parseable summary lines (`monitor=... status=...`) and an aggregated run log.
 
+
+## Supported environments (high level)
+
+- **Linux distributions**: designed for common enterprise distros (RHEL-like, Debian/Ubuntu, SUSE-like). Some monitors auto-detect available tooling.
+- **Execution**: local host checks and/or distributed checks over SSH from a monitoring node.
+- **Schedulers**: cron or systemd timer (installer can set these up).
+
+## Dark-site / offline (air-gapped) use
+
+This project is designed to work in environments without direct Internet access.
+
+Typical workflow:
+1. On a connected machine, download a release tarball (or clone the repo).
+2. Transfer it to the dark-site environment.
+3. Install using `install.sh` and your internal package repos/mirrors.
+
+See the full steps and release/version tracking notes in [`docs/reference.md`](docs/reference.md).
+
+
 ## Quickstart
 
 ### Local run (from the repo)
@@ -71,13 +90,15 @@ monitor=<name> host=<target> status=<OK|WARN|CRIT|UNKNOWN|SKIP> node=<runner> ke
 ## Table of Contents
 
 - [What it does](#what-it-does)
+- [Supported environments (high level)](#supported-environments-high-level)
+- [Dark-site / offline (air-gapped) use](#dark-site-offline-air-gapped-use)
 - [Quickstart](#quickstart)
-  - [Local run (from the repo)](#local-run-from-the-repo)
-  - [Distributed run (monitoring node)](#distributed-run-monitoring-node)
+-   [Local run (from the repo)](#local-run-from-the-repo)
+-   [Distributed run (monitoring node)](#distributed-run-monitoring-node)
 - [Install (recommended)](#install-recommended)
 - [Configuration (the 3 files you’ll touch first)](#configuration-the-3-files-youll-touch-first)
 - [How to read results](#how-to-read-results)
-  - [Summary contract (for automation)](#summary-contract-for-automation)
+-   [Summary contract (for automation)](#summary-contract-for-automation)
 - [Common knobs](#common-knobs)
 - [Full reference](docs/reference.md)
 
