@@ -11,7 +11,7 @@
 # ===== Shared helpers =====
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[user_monitor] "
-LM_LOGFILE="/var/log/user_monitor.log"
+LM_LOGFILE="${LM_LOGFILE:-/var/log/user_monitor.log}"
 : "${LM_MAX_PARALLEL:=0}"     # 0=sequential; set >0 to run hosts in parallel
 : "${LM_EMAIL_ENABLED:=true}" # master email toggle
 
@@ -81,8 +81,9 @@ run_for_host(){
     lm_err "[$host] SSH unreachable"
     append_alert "$host|ssh|unreachable"
     anomalies=$((anomalies+1))
+    lm_summary "user_monitor" "$host" "CRIT" reason=ssh_unreachable anomalies=$anomalies
     lm_info "===== Completed $host ====="
-    return
+    return 2
   fi
 
   # ---------- Users ----------
@@ -182,7 +183,9 @@ lm_info "===== Completed $host ====="
 ensure_dirs
 lm_info "=== User Monitor Script Started ==="
 
-lm_for_each_host run_for_host
+lm_for_each_host_rc run_for_host
+worst=$?
+exit "$worst"
 
 alerts="$(cat "$ALERTS_FILE" 2>/dev/null)"
 rm -f "$ALERTS_FILE" 2>/dev/null || true

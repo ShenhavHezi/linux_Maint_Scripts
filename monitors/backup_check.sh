@@ -12,7 +12,7 @@
 # ===== Shared helpers =====
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[backup_check] "
-LM_LOGFILE="/var/log/backup_check.log"
+LM_LOGFILE="${LM_LOGFILE:-/var/log/backup_check.log}"
 : "${LM_MAX_PARALLEL:=0}"     # 0=sequential; >0 parallelize hosts
 : "${LM_EMAIL_ENABLED:=true}" # master toggle for lm_mail
 lm_require_singleton "backup_check"
@@ -75,11 +75,12 @@ run_for_host(){
   if ! lm_reachable "$host"; then
     lm_err "[$host] SSH unreachable"
     append_alert "$host|*|?|?|?|CRIT|ssh_unreachable"
+    lm_summary "backup_check" "$host" "CRIT" reason=ssh_unreachable
     lm_info "===== Completed $host ====="
-    return
+    return 2
   fi
 
-  [ -s "$TARGETS" ] || { lm_err "[$host] targets file missing/empty: $TARGETS"; lm_info "===== Completed $host ====="; return; }
+  [ -s "$TARGETS" ] || { lm_err "[$host] targets file missing/empty: $TARGETS"; lm_summary "backup_check" "$host" "SKIP" reason=missing_targets_file; lm_info "===== Completed $host ====="; return 0; }
 
   # Select rows for this host (* or exact)
   awk -F',' -v H="$host" '
@@ -139,7 +140,10 @@ run_for_host(){
 ALERTS_FILE="$(mktemp -p "${LM_STATE_DIR:-/var/tmp}" backup_check.alerts.XXXXXX)"
 lm_info "=== Backup Check Started (verify_timeout=${VERIFY_TIMEOUT}s) ==="
 
-lm_for_each_host run_for_host
+lm_for_each_host_rc run_for_host
+worst=$?
+# do not exit early; use worst for overall summary
+
 
 alerts="$(cat "$ALERTS_FILE" 2>/dev/null)"
 
@@ -162,5 +166,7 @@ $(echo "$alerts" | awk -F'|' '{printf "%s | %s | %s | %s | %s | %s | %s | %s\n",
 This is an automated message from backup_check.sh."
   mail_if_enabled "$MAIL_SUBJECT_PREFIX $subject" "$body"
 fi
+
+exit "$worst"
 
 lm_info "=== Backup Check Finished ==="

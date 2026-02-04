@@ -6,7 +6,7 @@
 # ===== Shared helpers =====
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[inventory_export] "
-LM_LOGFILE="/var/log/inventory_export.log"
+LM_LOGFILE="${LM_LOGFILE:-/var/log/inventory_export.log}"
 : "${LM_MAX_PARALLEL:=0}"     # 0=sequential; set >0 to run hosts concurrently
 : "${LM_EMAIL_ENABLED:=true}" # master email toggle
 
@@ -172,7 +172,8 @@ run_for_host(){
 
   if ! lm_reachable "$host"; then
     lm_err "[$host] SSH unreachable"
-    return
+    lm_summary "inventory_export" "$host" "CRIT" reason=ssh_unreachable
+    return 2
   fi
 
   # --- inventory values ---
@@ -206,7 +207,9 @@ run_for_host(){
 ensure_dirs
 lm_info "=== Inventory Export Started (CSV: $CSV_FILE) ==="
 
-lm_for_each_host run_for_host
+lm_for_each_host_rc run_for_host
+worst=$?
+# Continue to write summary and optionally mail; exit with worst at end
 
 
 # One-line summary to stdout (for wrapper logs)
@@ -216,6 +219,7 @@ rows=0
 lm_summary "inventory_export" "all" "OK" csv="$today_csv" hosts=${rows:-0}
 # legacy:
 # echo inventory_export summary status=OK csv="$today_csv" hosts=${rows:-0}
+exit "$worst"
 lm_info "=== Inventory Export Finished ==="
 
 if [ "$MAIL_ON_RUN" = "true" ]; then

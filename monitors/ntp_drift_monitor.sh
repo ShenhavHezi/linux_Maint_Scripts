@@ -13,7 +13,7 @@
 # ===== Shared helpers =====
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[ntp_drift] "
-LM_LOGFILE="/var/log/ntp_drift_monitor.log"
+LM_LOGFILE="${LM_LOGFILE:-/var/log/ntp_drift_monitor.log}"
 : "${LM_MAX_PARALLEL:=0}"     # 0=sequential; >0 to run hosts in parallel
 : "${LM_EMAIL_ENABLED:=true}" # master email toggle
 
@@ -147,8 +147,9 @@ run_for_host() {
   if ! lm_reachable "$host"; then
     lm_err "[$host] SSH unreachable"
     append_alert "$host|unreachable|?|?|?|no"
+    lm_summary "ntp_drift_monitor" "$host" "CRIT" reason=ssh_unreachable checked=0 warn=0 crit=1
     lm_info "===== Completed $host ====="
-    return
+    return 2
   fi
 
   local impl; impl="$(impl_detect "$host")"
@@ -157,7 +158,7 @@ run_for_host() {
     chrony)     line="$(probe_chrony "$host")" ;;
     ntpd)       line="$(probe_ntpd "$host")" ;;
     timesyncd)  line="$(probe_timesyncd "$host")" ;;
-    *)          lm_warn "[$host] No known time-sync tool found"; lm_info "===== Completed $host ====="; return ;;
+    *)          lm_warn "[$host] No known time-sync tool found"; lm_summary "ntp_drift_monitor" "$host" "SKIP" reason=no_timesync_tool checked=0 warn=0 crit=0; lm_info "===== Completed $host ====="; return 0 ;;
   esac
 
   checked=1
@@ -199,7 +200,9 @@ run_for_host() {
 # ========================
 lm_info "=== NTP Drift Monitor Started (warn=${OFFSET_WARN_MS}ms, crit=${OFFSET_CRIT_MS}ms) ==="
 
-lm_for_each_host run_for_host
+lm_for_each_host_rc run_for_host
+worst=$?
+exit "$worst"
 
 alerts="$(cat "$ALERTS_FILE" 2>/dev/null)"
 rm -f "$ALERTS_FILE" 2>/dev/null || true

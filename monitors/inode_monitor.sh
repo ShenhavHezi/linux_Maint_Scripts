@@ -6,7 +6,7 @@
 # ===== Shared helpers =====
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[inode_monitor] "
-LM_LOGFILE="/var/log/inode_monitor.log"
+LM_LOGFILE="${LM_LOGFILE:-/var/log/inode_monitor.log}"
 : "${LM_MAX_PARALLEL:=0}"     # 0=sequential; set >0 to run hosts in parallel
 : "${LM_EMAIL_ENABLED:=true}" # master email toggle
 
@@ -98,13 +98,15 @@ run_for_host(){
   if ! lm_reachable "$host"; then
     lm_err "[$host] SSH unreachable"
     append_alert "$host|ssh|unreachable"
-    return
+    lm_summary "inode_monitor" "$host" "CRIT" reason=ssh_unreachable checked=0 warn=0 crit=0
+    return 2
   fi
 
   local lines; lines="$(collect_inodes "$host")"
   if [ -z "$lines" ]; then
     lm_warn "[$host] No df output."
-    return
+    lm_summary "inode_monitor" "$host" "UNKNOWN" reason=no_df_output checked=0 warn=0 crit=0
+    return 3
   fi
 
   while IFS='|' read -r _fs type inodes iused iusepct mp; do
@@ -149,7 +151,9 @@ run_for_host(){
 # ========================
 lm_info "=== Inode Monitor Started (defaults warn=${DEFAULT_WARN}% crit=${DEFAULT_CRIT}%) ==="
 
-lm_for_each_host run_for_host
+lm_for_each_host_rc run_for_host
+worst=$?
+exit "$worst"
 
 alerts="$(cat "$ALERTS_FILE" 2>/dev/null)"
 rm -f "$ALERTS_FILE" 2>/dev/null || true
