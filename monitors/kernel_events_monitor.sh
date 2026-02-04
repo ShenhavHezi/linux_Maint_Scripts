@@ -100,9 +100,9 @@ run_for_host(){
 main(){
   : > "$ALERTS_FILE"
 
-  local worst=0
-  lm_for_each_host run_for_host
-
+  # Run per-host checks and propagate worst rc (supports parallel mode)
+  lm_for_each_host_rc run_for_host
+  worst=$?
 
   if [ -s "$ALERTS_FILE" ]; then
     mail_if_enabled "$MAIL_SUBJECT_PREFIX Kernel events detected" "$(cat "$ALERTS_FILE")"

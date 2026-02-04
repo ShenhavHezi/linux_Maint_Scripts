@@ -212,11 +212,9 @@ ctrl=$(echo "$out" | awk -F'[ =]+' '{for(i=1;i<=NF;i++) if($i=="ctrl") print $(i
 main(){
   : > "$ALERTS_FILE"
 
-  local worst=0
-  lm_for_each_host run_for_host
-
-  # capture worst exit code from per-host runs by scanning logfile for last status lines is complex; instead we track in run_for_host and main using a global.
-
+  # Run per-host checks and propagate worst rc (supports parallel mode)
+  lm_for_each_host_rc run_for_host
+  worst=$?
 
   if [ -s "$ALERTS_FILE" ]; then
     mail_if_enabled "$MAIL_SUBJECT_PREFIX Storage health issues detected" "$(cat "$ALERTS_FILE")"

@@ -263,6 +263,60 @@ lm_for_each_host() {
   fi
 }
 
+
+# ========= Small job-pool for per-host parallelism (with worst-rc aggregation) =========
+# Usage: lm_for_each_host_rc my_function
+# - Calls: my_function <host>
+# - Returns: worst exit code across hosts (0/1/2/3)
+# Notes:
+# - In parallel mode, collects each background job rc via wait on recorded PIDs.
+# - In serial mode, updates worst rc inline.
+lm_for_each_host_rc() {
+  local fn="$1"
+  local -a PIDS=()
+  local -a HOSTS_FOR_PID=()
+  local running=0
+  local worst=0
+
+  while read -r HOST; do
+    [ -z "$HOST" ] && continue
+    lm_is_excluded "$HOST" && { lm_info "Skipping $HOST (excluded)"; continue; }
+
+    if [ "${LM_MAX_PARALLEL:-0}" -gt 0 ]; then
+      "$fn" "$HOST" &
+      PIDS+=($!)
+      HOSTS_FOR_PID+=("$HOST")
+      running=$((running+1))
+      if [ "$running" -ge "$LM_MAX_PARALLEL" ]; then
+        # wait for the next job to finish (bash >=4.3). If not supported, fall back to waiting one PID.
+        if wait -n 2>/dev/null; then
+          :
+        else
+          wait "${PIDS[0]}" 2>/dev/null || true
+        fi
+        running=$((running-1))
+      fi
+    else
+      "$fn" "$HOST"
+      rc=$?
+      [ "$rc" -gt "$worst" ] && worst="$rc"
+    fi
+  done < <(lm_hosts)
+
+  if [ "${LM_MAX_PARALLEL:-0}" -gt 0 ] && [ "${#PIDS[@]}" -gt 0 ]; then
+    # Wait all remaining and aggregate rc.
+    local i pid rc
+    for i in "${!PIDS[@]}"; do
+      pid="${PIDS[$i]}"
+      wait "$pid" 2>/dev/null
+      rc=$?
+      [ "$rc" -gt "$worst" ] && worst="$rc"
+    done
+  fi
+
+  return "$worst"
+}
+
 # ========= Standard summary line =========
 # Usage: lm_summary <monitor_name> <status> [key=value ...]
 # Prints a single machine-parseable line.
