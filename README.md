@@ -26,7 +26,6 @@ Run it locally or from a monitoring node over SSH, get structured logs + a simpl
 
 Optional (improves coverage): `smartctl` (smartmontools), `nvme` (nvme-cli), vendor RAID CLIs.
 
-<!-- dark-site-offline-air-gapped-use -->
 ## Dark-site / offline (air-gapped) use
 
 This project is designed to work in environments without direct Internet access.
@@ -115,7 +114,7 @@ Details in [`docs/reference.md`](docs/reference.md).
 - [What it does](#what-it-does)
 - [Supported environments (high level)](#supported-environments-high-level)
 - [Requirements (minimal)](#requirements-minimal)
-- [Dark-site / offline (air-gapped) use](#dark-site-offline-air-gapped-use)
+- [Dark-site / offline (air-gapped) use](docs/DARK_SITE.md)
 - [Quickstart](#quickstart)
 -   [Local run (from the repo)](#local-run-from-the-repo)
 -   [Distributed run (monitoring node)](#distributed-run-monitoring-node)
