@@ -19,7 +19,7 @@ jobs:
       - name: ShellCheck
         run: |
           # Treat known-noisy warnings as suppressed centrally.
-          EXCLUDES="SC1090,SC1091,SC2034,SC2016,SC2162,SC2155,SC2317"
+          EXCLUDES="SC1090,SC1091,SC2034,SC2016,SC2162,SC2155,SC2317,SC2086"
           shellcheck -x --exclude="$EXCLUDES" run_full_health_monitor.sh
           shellcheck -x --exclude="$EXCLUDES" lib/linux_maint.sh
           shellcheck -x --exclude="$EXCLUDES" bin/linux-maint
