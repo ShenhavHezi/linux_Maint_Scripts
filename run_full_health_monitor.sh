@@ -230,12 +230,24 @@ _tmp_human=$(mktemp /tmp/linux_maint_human.XXXXXX)
 } > "$_tmp_human"
 
 cat "$_tmp_human" >> "$tmp_report"
-rm -f "$_tmp_human" "$_tmp_mon_snapshot" 2>/dev/null || true
+# (moved cleanup to after notify so it can include the human+monitor snapshot)
+# rm -f "$_tmp_human" "$_tmp_mon_snapshot" 2>/dev/null || true
 
 
   # ---- notify (optional, wrapper-level) ----
+  # ---- diff since last run (optional, for more actionable notifications) ----
+  DIFF_STATE_DIR="${LM_NOTIFY_STATE_DIR:-${LM_STATE_DIR:-/var/lib/linux_maint}}"
+  PREV_SUMMARY="$DIFF_STATE_DIR/last_summary_monitor_lines.log"
+  CUR_SUMMARY="$_tmp_mon_snapshot"
+  DIFF_TEXT=""
+  if [[ -f "$PREV_SUMMARY" && -f "$CUR_SUMMARY" && -x "$REPO_DIR/tools/summary_diff.py" ]]; then
+    DIFF_TEXT="$(python3 "$REPO_DIR/tools/summary_diff.py" "$PREV_SUMMARY" "$CUR_SUMMARY" 2>/dev/null || true)"
+  fi
+  # persist current for next run (best-effort)
+  mkdir -p "$DIFF_STATE_DIR" 2>/dev/null || true
+  cp -f "$CUR_SUMMARY" "$PREV_SUMMARY" 2>/dev/null || true
   if command -v lm_notify_should_send >/dev/null 2>&1; then
-    _notify_text="$(cat "$_tmp_human" 2>/dev/null; echo ""; echo "FINAL_STATUS_SUMMARY"; cat "$_tmp_mon_snapshot" 2>/dev/null)"
+    _notify_text="$(cat "$_tmp_human" 2>/dev/null; if [ -n "$DIFF_TEXT" ]; then echo ""; echo "DIFF_SINCE_LAST_RUN"; echo "$DIFF_TEXT"; fi; echo ""; echo "FINAL_STATUS_SUMMARY"; cat "$_tmp_mon_snapshot" 2>/dev/null)"
     if lm_notify_should_send "$_notify_text"; then
       lm_notify_send "health summary overall=$overall" "$_notify_text" || true
       echo "NOTIFY: sent summary email" >> "$tmp_report"
@@ -243,6 +255,10 @@ rm -f "$_tmp_human" "$_tmp_mon_snapshot" 2>/dev/null || true
       echo "NOTIFY: skipped" >> "$tmp_report"
     fi
   fi
+
+  # cleanup tmp files created for summaries
+  rm -f "$_tmp_human" "$_tmp_mon_snapshot" 2>/dev/null || true
+
 
 cat "$tmp_report"
 
@@ -257,7 +273,7 @@ tmp_mon=$(mktemp /tmp/linux_maint_mon.XXXXXX)
   grep -a '^monitor=' "$tmp_report" > "$tmp_mon" || true
   cat "$tmp_mon" > "$tmp_summary" 2>/dev/null || :
 cat "$tmp_summary" > "$SUMMARY_FILE" 2>/dev/null || true
-ln -sfn "$SUMMARY_FILE" "$SUMMARY_LATEST_FILE" 2>/dev/null || true
+ln -sfn "$(basename "$SUMMARY_FILE")" "$SUMMARY_LATEST_FILE" 2>/dev/null || true
 rm -f "$tmp_summary" 2>/dev/null || true
 
 # Also write JSON + Prometheus outputs (best-effort)
@@ -290,7 +306,8 @@ if json_file and rows:
             if os.path.islink(json_latest) or os.path.exists(json_latest):
                 try: os.unlink(json_latest)
                 except: pass
-            os.symlink(json_file,json_latest)
+            import os
+            os.symlink(os.path.basename(json_file),json_latest)
         except: pass
 status_map={"OK":0,"WARN":1,"CRIT":2,"UNKNOWN":3,"SKIP":3}
 if prom_file and rows:
