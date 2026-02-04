@@ -16,7 +16,7 @@ lm_require_singleton "cert_monitor"
 
 _summary_emitted=0
 emit_summary(){ _summary_emitted=1; lm_summary "cert_monitor" "$@"; }
-trap 'rc=$?; if [ "${_summary_emitted:-0}" -eq 0 ]; then lm_summary "cert_monitor" "localhost" "UNKNOWN" reason=early_exit rc=$rc; fi' EXIT
+trap 'rc=$?; if [ "${_summary_emitted:-0}" -eq 0 ]; then lm_summary "cert_monitor" "localhost" "UNKNOWN" reason=early_exit rc=$?; fi' EXIT
 mkdir -p "$(dirname "$LM_LOGFILE")"
 
 MAIL_SUBJECT_PREFIX='[Cert Monitor]'

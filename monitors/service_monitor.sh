@@ -17,7 +17,7 @@ lm_require_singleton "service_monitor"
 
 _summary_emitted=0
 emit_summary(){ _summary_emitted=1; lm_summary "service_monitor" "$@"; }
-trap 'rc=$?; if [ "${_summary_emitted:-0}" -eq 0 ]; then lm_summary "service_monitor" "localhost" "UNKNOWN" reason=early_exit rc=$rc; fi' EXIT
+trap 'rc=$?; if [ "${_summary_emitted:-0}" -eq 0 ]; then lm_summary "service_monitor" "localhost" "UNKNOWN" reason=early_exit rc=$?; fi' EXIT
 
 # ========================
 # Script configuration
