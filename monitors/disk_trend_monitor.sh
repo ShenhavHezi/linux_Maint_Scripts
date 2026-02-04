@@ -16,7 +16,7 @@ set -euo pipefail
 
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[disk_trend] "
-LM_LOGFILE="/var/log/disk_trend_monitor.log"
+LM_LOGFILE="${LM_LOGFILE:-/var/log/disk_trend_monitor.log}"
 : "${LM_MAX_PARALLEL:=0}"
 : "${LM_EMAIL_ENABLED:=true}"
 
@@ -25,7 +25,7 @@ lm_require_singleton "disk_trend_monitor"
 MAIL_SUBJECT_PREFIX='[Disk Trend Monitor]'
 EMAIL_ON_ALERT="true"
 
-STATE_BASE="/var/lib/linux_maint/disk_trend"
+STATE_BASE="${STATE_BASE:-/var/lib/linux_maint/disk_trend}"
 
 # Trend thresholds (days until projected 100%)
 WARN_DAYS=14
@@ -49,7 +49,12 @@ append_alert(){ echo "$1" >> "$ALERTS_FILE"; }
 mail_if_enabled(){ [ "$EMAIL_ON_ALERT" = "true" ] || return 0; lm_mail "$1" "$2"; }
 
 ensure_dirs(){
-  mkdir -p "$(dirname "$LM_LOGFILE")" "$STATE_BASE"
+  mkdir -p "$(dirname "$LM_LOGFILE")" 2>/dev/null || true
+  if ! mkdir -p "$STATE_BASE" 2>/dev/null; then
+    # fallback for unprivileged runs
+    STATE_BASE="${LM_STATE_DIR:-/tmp}/linux_maint/disk_trend"
+    mkdir -p "$STATE_BASE" 2>/dev/null || true
+  fi
   chmod 0755 "${STATE_BASE%/*}" 2>/dev/null || true
 }
 
@@ -72,8 +77,17 @@ EOF
 append_state(){
   local host="$1" mount="$2" used_pct="$3" used_kb="$4"
   local f="$STATE_BASE/${host}.csv"
-  printf "%s,%s,%s,%s\n" "$(date +%s)" "$mount" "$used_pct" "$used_kb" >> "$f"
+  if ! printf "%s,%s,%s,%s
+" "$(date +%s)" "$mount" "$used_pct" "$used_kb" >> "$f" 2>/dev/null; then
+    # If we cannot write to STATE_BASE (permissions), fallback to unprivileged location.
+    STATE_BASE="${LM_STATE_DIR:-/tmp}/linux_maint/disk_trend"
+    mkdir -p "$STATE_BASE" 2>/dev/null || true
+    f="$STATE_BASE/${host}.csv"
+    printf "%s,%s,%s,%s
+" "$(date +%s)" "$mount" "$used_pct" "$used_kb" >> "$f" 2>/dev/null || true
+  fi
 }
+
 
 # Compute forecast from history of used_kb for a mount.
 # Returns: days_to_full (or NA) and slope_kb_per_day.

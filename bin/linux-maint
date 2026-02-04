@@ -36,6 +36,8 @@ MODE="installed"
 REPO_LOG_DIR="$REPO_ROOT/.logs"
 REPO_STATUS_FILE="$REPO_LOG_DIR/last_status_full"
 REPO_LATEST_LOG="$REPO_LOG_DIR/full_health_monitor_latest.log"
+REPO_SUMMARY_LATEST="$REPO_LOG_DIR/full_health_monitor_summary_latest.log"
+INST_SUMMARY_LATEST="/var/log/health/full_health_monitor_summary_latest.log"
 
 
 need_root_for(){
@@ -48,8 +50,63 @@ need_root_for(){
         echo "      (or run the wrapper directly: sudo /usr/local/sbin/run_full_health_monitor.sh)" >&2
         ;;
       status)
-        echo "Hint: sudo linux-maint status" >&2
-        ;;
+    if [[ "$MODE" == "installed" ]]; then
+      need_root_for status
+    fi
+
+    if [[ "$MODE" == "repo" ]]; then
+      echo "=== Mode ==="
+      echo "repo"
+      echo "repo_root: $REPO_ROOT"
+      echo "linux_maint_lib: ${LINUX_MAINT_LIB:-}"
+      echo "logs: $REPO_LOG_DIR"
+      echo ""; echo "=== Last run status ==="
+      if [[ -f "$REPO_STATUS_FILE" ]]; then
+        cat "$REPO_STATUS_FILE"
+      else
+        echo "No status file: $REPO_STATUS_FILE"
+      fi
+    else
+      status_file="/var/log/health/last_status_full"
+      echo "=== Mode ==="
+      echo "installed"
+      echo "prefix: $PREFIX"
+      echo ""; echo "=== Installed paths ==="
+      echo "wrapper: $SBIN/run_full_health_monitor.sh"
+      echo "libexec: $LIBEXEC"
+      echo "build_info: $SHARE/BUILD_INFO"
+      [[ -f "$SHARE/BUILD_INFO" ]] && { echo ""; cat "$SHARE/BUILD_INFO"; }
+      echo ""; echo "=== Last run status ==="
+      if [[ -f "$status_file" ]]; then
+        cat "$status_file"
+      else
+        echo "No status file: $status_file"
+      fi
+    fi
+
+    echo ""; echo "=== Summary (monitor= lines) ==="
+    summary_file=""
+    if [[ "$MODE" == "repo" ]]; then
+      summary_file="$REPO_SUMMARY_LATEST"
+    else
+      summary_file="$INST_SUMMARY_LATEST"
+    fi
+
+    if [[ -f "$summary_file" ]]; then
+      echo "(from summary file: $summary_file)"
+      tail -n 200 "$summary_file" || true
+    else
+      echo "No summary file: $summary_file"
+      echo "Falling back to grepping latest wrapper log"
+      log="/var/log/health/full_health_monitor_latest.log"
+      [[ "$MODE" == "repo" ]] && log="$REPO_LATEST_LOG"
+      if [[ -f "$log" ]]; then
+        grep -E " status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT|FINAL_STATUS_SUMMARY|^\\[.*\\] monitor=" "$log" | tail -n 120 || true
+      else
+        echo "No log: $log"
+      fi
+    fi
+    ;;
       logs)
         echo "Hint: sudo linux-maint logs 200" >&2
         ;;
@@ -152,48 +209,59 @@ case "$cmd" in
     if [[ "$MODE" == "installed" ]]; then
       need_root_for status
     fi
-        if [[ "$MODE" == "repo" ]]; then
-          echo "=== Mode ==="
-          echo "repo"
-          echo "repo_root: $REPO_ROOT"
-          echo "linux_maint_lib: ${LINUX_MAINT_LIB:-}"
-          echo "logs: $REPO_LOG_DIR"
-          echo ""; echo "=== Last run status ==="
-          if [[ -f "$REPO_STATUS_FILE" ]]; then
-            cat "$REPO_STATUS_FILE"
-          else
-            echo "No status file: $REPO_STATUS_FILE"
-          fi
-          echo ""; echo "=== Recent WARN/CRIT/UNKNOWN lines (latest log) ==="
-          if [[ -f "$REPO_LATEST_LOG" ]]; then
-            grep -E " status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT" "$REPO_LATEST_LOG" | tail -n 80 || true
-          else
-            echo "No log: $REPO_LATEST_LOG"
-          fi
-          exit 0
-        fi
-        status_file="/var/log/health/last_status_full"
-        echo "=== Mode ==="
-        echo "installed"
-        echo "prefix: $PREFIX"
-        echo ""; echo "=== Installed paths ==="
-        echo "wrapper: $SBIN/run_full_health_monitor.sh"
-        echo "libexec: $LIBEXEC"
-        echo "build_info: $SHARE/BUILD_INFO"
-        [[ -f "$SHARE/BUILD_INFO" ]] && { echo ""; cat "$SHARE/BUILD_INFO"; }
-        echo ""; echo "=== Last run status ==="
-        if [[ -f "$status_file" ]]; then
-          cat "$status_file"
-        else
-          echo "No status file: $status_file"
-        fi
-        echo ""; echo "=== Recent WARN/CRIT/UNKNOWN lines (latest log) ==="
-        log="/var/log/health/full_health_monitor_latest.log"
-        if [[ -f "$log" ]]; then
-          grep -E " status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT" "$log" | tail -n 80 || true
-        else
-          echo "No log: $log"
-        fi
+
+    if [[ "$MODE" == "repo" ]]; then
+      echo "=== Mode ==="
+      echo "repo"
+      echo "repo_root: $REPO_ROOT"
+      echo "linux_maint_lib: ${LINUX_MAINT_LIB:-}"
+      echo "logs: $REPO_LOG_DIR"
+      echo ""; echo "=== Last run status ==="
+      if [[ -f "$REPO_STATUS_FILE" ]]; then
+        cat "$REPO_STATUS_FILE"
+      else
+        echo "No status file: $REPO_STATUS_FILE"
+      fi
+    else
+      status_file="/var/log/health/last_status_full"
+      echo "=== Mode ==="
+      echo "installed"
+      echo "prefix: $PREFIX"
+      echo ""; echo "=== Installed paths ==="
+      echo "wrapper: $SBIN/run_full_health_monitor.sh"
+      echo "libexec: $LIBEXEC"
+      echo "build_info: $SHARE/BUILD_INFO"
+      [[ -f "$SHARE/BUILD_INFO" ]] && { echo ""; cat "$SHARE/BUILD_INFO"; }
+      echo ""; echo "=== Last run status ==="
+      if [[ -f "$status_file" ]]; then
+        cat "$status_file"
+      else
+        echo "No status file: $status_file"
+      fi
+    fi
+
+    echo ""; echo "=== Summary (monitor= lines) ==="
+    summary_file=""
+    if [[ "$MODE" == "repo" ]]; then
+      summary_file="$REPO_SUMMARY_LATEST"
+    else
+      summary_file="$INST_SUMMARY_LATEST"
+    fi
+
+    if [[ -f "$summary_file" ]]; then
+      echo "(from summary file: $summary_file)"
+      tail -n 200 "$summary_file" || true
+    else
+      echo "No summary file: $summary_file"
+      echo "Falling back to grepping latest wrapper log"
+      log="/var/log/health/full_health_monitor_latest.log"
+      [[ "$MODE" == "repo" ]] && log="$REPO_LATEST_LOG"
+      if [[ -f "$log" ]]; then
+        grep -E " status=(WARN|CRIT|UNKNOWN)|SKIP:|SUMMARY_RESULT|FINAL_STATUS_SUMMARY|^\\[.*\\] monitor=" "$log" | tail -n 120 || true
+      else
+        echo "No log: $log"
+      fi
+    fi
     ;;
 
   install)

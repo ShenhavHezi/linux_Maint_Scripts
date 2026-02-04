@@ -57,6 +57,9 @@ fi
 # Disable email unless explicitly enabled
 export LM_EMAIL_ENABLED="${LM_EMAIL_ENABLED:-false}"
 
+# Per-monitor execution timeout (wrapper-level safety)
+MONITOR_TIMEOUT_SECS="${MONITOR_TIMEOUT_SECS:-600}"
+
 # health_monitor already includes: uptime/load/cpu/mem/disk/top processes.
 # Avoid overlaps by excluding disk_monitor/process_hog/server_info.
 
@@ -98,17 +101,17 @@ run_one() {
   # Skip monitors that require config/baselines unless present
   case "$s" in
     cert_monitor.sh)
-      [ -s /etc/linux_maint/certs.txt ] || { echo "SKIP: /etc/linux_maint/certs.txt missing" >> "$tmp_report"; return 0; }
+      [ -s /etc/linux_maint/certs.txt ] || { echo "SKIP: /etc/linux_maint/certs.txt missing" >> "$tmp_report"; skipped=$((skipped+1)); return 0; }
       ;;
     ports_baseline_monitor.sh)
-      [ -s /etc/linux_maint/ports_baseline.txt ] || { echo "SKIP: /etc/linux_maint/ports_baseline.txt missing" >> "$tmp_report"; return 0; }
+      [ -s /etc/linux_maint/ports_baseline.txt ] || { echo "SKIP: /etc/linux_maint/ports_baseline.txt missing" >> "$tmp_report"; skipped=$((skipped+1)); return 0; }
       ;;
     config_drift_monitor.sh)
-      [ -s /etc/linux_maint/config_paths.txt ] || { echo "SKIP: /etc/linux_maint/config_paths.txt missing" >> "$tmp_report"; return 0; }
+      [ -s /etc/linux_maint/config_paths.txt ] || { echo "SKIP: /etc/linux_maint/config_paths.txt missing" >> "$tmp_report"; skipped=$((skipped+1)); return 0; }
       ;;
     user_monitor.sh)
-      [ -s /etc/linux_maint/baseline_users.txt ] || { echo "SKIP: /etc/linux_maint/baseline_users.txt missing" >> "$tmp_report"; return 0; }
-      [ -s /etc/linux_maint/baseline_sudoers.txt ] || { echo "SKIP: /etc/linux_maint/baseline_sudoers.txt missing" >> "$tmp_report"; return 0; }
+      [ -s /etc/linux_maint/baseline_users.txt ] || { echo "SKIP: /etc/linux_maint/baseline_users.txt missing" >> "$tmp_report"; skipped=$((skipped+1)); return 0; }
+      [ -s /etc/linux_maint/baseline_sudoers.txt ] || { echo "SKIP: /etc/linux_maint/baseline_sudoers.txt missing" >> "$tmp_report"; skipped=$((skipped+1)); return 0; }
       ;;
   esac
 
@@ -123,9 +126,15 @@ run_one() {
     return 0
   fi
 
-  bash "$path" >> "$tmp_report" 2>&1
+  # Wrapper-level timeout to prevent a single monitor from hanging the whole run
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$MONITOR_TIMEOUT_SECS" bash "$path" >> "$tmp_report" 2>&1
+  else
+    bash "$path" >> "$tmp_report" 2>&1
+  fi
 }
 
+skipped=0
 worst=0
 ok=0; warn=0; crit=0; unk=0
 
@@ -152,7 +161,7 @@ case "$worst" in
 esac
 
 {
-  echo "SUMMARY_RESULT overall=$overall ok=$ok warn=$warn crit=$crit unknown=$unk finished=$(date -Is) exit_code=$worst"
+  echo "SUMMARY_RESULT overall=$overall ok=$ok warn=$warn crit=$crit unknown=$unk skipped=$skipped finished=$(date -Is) exit_code=$worst"
   echo "============================================================"
   # Final status summary: explicitly extract only standardized machine lines.
   # These come from lib/linux_maint.sh: lm_summary() -> lines starting with "monitor=".

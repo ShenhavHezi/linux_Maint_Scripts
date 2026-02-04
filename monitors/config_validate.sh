@@ -121,6 +121,4 @@ validate(){
   exit 0
 }
 
-out="$(validate "$@")"
-printf "%s
-" "$out" | tee -a "$LM_LOGFILE"
+validate "$@" | tee -a "$LM_LOGFILE"
