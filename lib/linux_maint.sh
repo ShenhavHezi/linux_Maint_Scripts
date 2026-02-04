@@ -68,6 +68,91 @@ lm_mail() {
   done < "$LM_EMAILS"
 }
 
+# ========= Wrapper-level notification (single email summary per run) =========
+# Optional; designed to be called by the wrapper script (run_full_health_monitor.sh).
+#
+# Config precedence:
+#   1) environment variables (LM_NOTIFY, LM_NOTIFY_TO, etc)
+#   2) /etc/linux_maint/notify.conf (simple KEY=VALUE lines)
+#
+# Supported keys:
+#   LM_NOTIFY=0|1
+#   LM_NOTIFY_TO="a@b,c@d"   (comma/space separated)
+#   LM_NOTIFY_ONLY_ON_CHANGE=0|1
+#   LM_NOTIFY_SUBJECT_PREFIX="[linux_maint]"
+#   LM_NOTIFY_STATE_DIR="/var/lib/linux_maint"
+#
+lm_load_notify_conf() {
+  local conf="${LM_NOTIFY_CONF:-/etc/linux_maint/notify.conf}"
+  [ -f "$conf" ] || return 0
+  # shellcheck disable=SC1090
+  set -a
+  # shellcheck disable=SC1090
+  . "$conf" || true
+  set +a
+}
+
+lm_notify_should_send() {
+  local summary_text="$1"
+
+  local enabled="${LM_NOTIFY:-0}"
+  [ "$enabled" = "1" ] || [ "$enabled" = "true" ] || return 1
+
+  local to="${LM_NOTIFY_TO:-}"
+  [ -n "$to" ] || { lm_warn "LM_NOTIFY enabled but LM_NOTIFY_TO is empty; skipping notify"; return 1; }
+
+  local only_change="${LM_NOTIFY_ONLY_ON_CHANGE:-0}"
+  if [ "$only_change" = "1" ] || [ "$only_change" = "true" ]; then
+    local state_dir="${LM_NOTIFY_STATE_DIR:-${LM_STATE_DIR:-/var/lib/linux_maint}}"
+    mkdir -p "$state_dir" 2>/dev/null || true
+    local state_file="$state_dir/last_summary.sha256"
+    local cur
+    cur="$(printf "%s" "$summary_text" | sha256sum | awk '{print $1}')"
+    if [ -f "$state_file" ]; then
+      local prev
+      prev="$(cat "$state_file" 2>/dev/null || true)"
+      if [ "$cur" = "$prev" ]; then
+        return 1
+      fi
+    fi
+    printf "%s\n" "$cur" > "$state_file" 2>/dev/null || true
+  fi
+
+  return 0
+}
+
+lm_notify_send() {
+  local subject="$1" body="$2"
+
+  local to="${LM_NOTIFY_TO:-}"
+  local prefix="${LM_NOTIFY_SUBJECT_PREFIX:-[linux_maint]}"
+
+  # Choose a transport; try common options.
+  if command -v mail >/dev/null 2>&1; then
+    # shellcheck disable=SC2086
+    # shellcheck disable=SC2086
+    # shellcheck disable=SC2046
+    set -- $(echo "$to" | tr "," " ")
+    printf "%s\n" "$body" | mail -s "${prefix} ${subject}" "$@"
+    return 0
+  fi
+
+  if command -v sendmail >/dev/null 2>&1; then
+    local from="${LM_NOTIFY_FROM:-linux_maint@$(hostname -f 2>/dev/null || hostname)}"
+    {
+      echo "From: $from"
+      echo "To: $to"
+      echo "Subject: ${prefix} ${subject}"
+      echo ""
+      echo "$body"
+    } | sendmail -t
+    return 0
+  fi
+
+  lm_warn "No supported mail transport found (mail/sendmail); skipping notify"
+  return 0
+}
+
 # ========= SSH helpers =========
 # lm_ssh HOST CMD...
 lm_ssh() {

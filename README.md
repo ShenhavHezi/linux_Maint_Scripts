@@ -93,6 +93,7 @@ monitor=<name> host=<target> status=<OK|WARN|CRIT|UNKNOWN|SKIP> node=<runner> ke
 
 - `MONITOR_TIMEOUT_SECS` (default `600`)
 - `LM_EMAIL_ENABLED=false` by default
+- `LM_NOTIFY` (wrapper-level per-run email summary; default `0` / off)
 - `LM_SSH_OPTS` (e.g. `-o BatchMode=yes -o ConnectTimeout=3`)
 - `LM_LOCAL_ONLY=true` (force local-only; used in CI)
 

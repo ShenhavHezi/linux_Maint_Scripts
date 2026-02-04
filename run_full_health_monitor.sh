@@ -21,6 +21,16 @@ fi
 export LM_LOCKDIR="${LM_LOCKDIR:-/tmp}"
 export LM_STATE_DIR="${LM_STATE_DIR:-/tmp}"
 
+# Load optional notification config (wrapper-level). Default OFF.
+if [[ -f "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" ]]; then
+  # shellcheck disable=SC1090
+  . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" >/dev/null 2>&1 || true
+  if command -v lm_load_notify_conf >/dev/null 2>&1; then
+    lm_load_notify_conf || true
+  fi
+fi
+
+
 if [[ -d "$REPO_DIR/monitors" ]]; then
   LOG_DIR_DEFAULT="$REPO_DIR/.logs"
 else
@@ -223,7 +233,18 @@ cat "$_tmp_human" >> "$tmp_report"
 rm -f "$_tmp_human" "$_tmp_mon_snapshot" 2>/dev/null || true
 
 
-  cat "$tmp_report"
+  # ---- notify (optional, wrapper-level) ----
+  if command -v lm_notify_should_send >/dev/null 2>&1; then
+    _notify_text="$(cat "$_tmp_human" 2>/dev/null; echo ""; echo "FINAL_STATUS_SUMMARY"; cat "$_tmp_mon_snapshot" 2>/dev/null)"
+    if lm_notify_should_send "$_notify_text"; then
+      lm_notify_send "health summary overall=$overall" "$_notify_text" || true
+      echo "NOTIFY: sent summary email" >> "$tmp_report"
+    else
+      echo "NOTIFY: skipped" >> "$tmp_report"
+    fi
+  fi
+
+cat "$tmp_report"
 
 } | awk '{ print strftime("[%F %T]"), $0 }' | tee "$logfile" >/dev/null
 

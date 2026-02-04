@@ -71,6 +71,32 @@ python3 tools/update_readme_defaults.py
 
 ## Tuning knobs (common configuration variables)
 
+### Wrapper-level notification (single summary email per run)
+
+By default, the wrapper does **not** send email. You can enable a single per-run summary email using either environment variables or `/etc/linux_maint/notify.conf`.
+
+Supported settings:
+- `LM_NOTIFY` = `0|1` (default: `0`)
+- `LM_NOTIFY_TO` = `"user@company.com,ops@company.com"` (required when enabled; comma/space separated)
+- `LM_NOTIFY_ONLY_ON_CHANGE` = `0|1` (default: `0`)
+- `LM_NOTIFY_SUBJECT_PREFIX` = `"[linux_maint]"`
+- `LM_NOTIFY_STATE_DIR` = `"/var/lib/linux_maint"` (where the last-run hash is stored; falls back to `LM_STATE_DIR`)
+- `LM_NOTIFY_FROM` = `"linux_maint@<host>"` (used when `sendmail` is the transport)
+
+Example `/etc/linux_maint/notify.conf`:
+
+```bash
+LM_NOTIFY=1
+LM_NOTIFY_TO="ops@company.com"
+LM_NOTIFY_ONLY_ON_CHANGE=1
+LM_NOTIFY_SUBJECT_PREFIX="[linux_maint]"
+```
+
+Mail transport auto-detection:
+- uses `mail` if available
+- otherwise uses `sendmail`
+
+
 Most defaults below are taken directly from the scripts (current repository version).
 
 ### `inode_monitor.sh`
