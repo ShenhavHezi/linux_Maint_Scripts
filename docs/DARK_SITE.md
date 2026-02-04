@@ -36,7 +36,7 @@ sha256sum -c SHA256SUMS
 
 ## 3) Install on the offline server(s)
 
-On each target server:
+On each target server (after you copy the tarball over, it will usually be in your working directory — not under `dist/`):
 
 ```bash
 tar -xzf linux_Maint_Scripts-*.tgz
@@ -51,7 +51,26 @@ linux-maint version || true
 sudo linux-maint status || true
 ```
 
-## 4) Run manually (quick test)
+
+## 4) Minimal startup (after installation)
+
+1) Review the generated configs under `/etc/linux_maint/` (the installer creates defaults).
+2) Run once manually to validate everything works:
+
+```bash
+sudo linux-maint run
+sudo linux-maint status
+```
+
+3) If you installed the timer (`--with-timer`), confirm it is active:
+
+```bash
+systemctl status linux-maint.timer --no-pager || true
+systemctl list-timers | grep -i linux-maint || true
+```
+
+
+## 5) Run manually (quick test)
 
 ```bash
 sudo linux-maint run
