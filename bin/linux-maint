@@ -94,7 +94,36 @@ need_root_for(){
 
     if [[ -f "$summary_file" ]]; then
       echo "(from summary file: $summary_file)"
-      tail -n 200 "$summary_file" || true
+      python3 - "$summary_file" "$ONLY" "$HOST_PAT" "$MON_PAT" "$TAIL_N" <<'PY'
+import re, sys
+
+path, only, host_pat, mon_pat, tail_n = sys.argv[1:6]
+tail_n = int(tail_n)
+host_re = re.compile(host_pat) if host_pat else None
+mon_re = re.compile(mon_pat) if mon_pat else None
+
+buf=[]
+with open(path, 'r', encoding='utf-8', errors='ignore') as f:
+    for line in f:
+        line=line.rstrip('
+')
+        if only and (f' status={only} ' not in (line+' ')):
+            continue
+        if host_re:
+            m=re.search(r'host=([^ ]+)', line)
+            h=m.group(1) if m else ''
+            if not host_re.search(h):
+                continue
+        if mon_re:
+            m=re.search(r'monitor=([^ ]+)', line)
+            mon=m.group(1) if m else ''
+            if not mon_re.search(mon):
+                continue
+        buf.append(line)
+
+for line in buf[-tail_n:]:
+    print(line)
+PY
     else
       echo "No summary file: $summary_file"
       echo "Possible reasons:"
@@ -204,7 +233,7 @@ Usage: linux-maint <command> [args]
 
 Commands:
   run [flags]         Run the full package (wrapper)
-  status              Show last run status + recent WARN/CRIT lines
+  status [--only S] [--host P] [--monitor P] [--tail N]  Show last run status + filtered summary lines
   diff [--json]       Show diff since last run (uses wrapper diff state)
   validate            Validate config file formats (best-effort)
   preflight           Run preflight checks
@@ -379,6 +408,23 @@ case "$cmd" in
       need_root_for status
     fi
 
+    ONLY=""
+    HOST_PAT=""
+    MON_PAT=""
+    TAIL_N=200
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --only) ONLY="$2"; shift 2;;
+        --host) HOST_PAT="$2"; shift 2;;
+        --monitor) MON_PAT="$2"; shift 2;;
+        --tail) TAIL_N="$2"; shift 2;;
+        -h|--help)
+          echo "Usage: linux-maint status [--only OK|WARN|CRIT|UNKNOWN|SKIP] [--host <pattern>] [--monitor <pattern>] [--tail N]"
+          exit 0;;
+        *) echo "Unknown status flag: $1" >&2; exit 2;;
+      esac
+    done
+
     if [[ "$MODE" == "repo" ]]; then
       echo "=== Mode ==="
       echo "repo"
@@ -418,7 +464,6 @@ case "$cmd" in
     fi
 
     if [[ -f "$summary_file" ]]; then
-      echo "(from summary file: $summary_file)"
       tail -n 200 "$summary_file" || true
     else
       echo "No summary file: $summary_file"
