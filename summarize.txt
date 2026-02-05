@@ -1,0 +1,82 @@
+# linux_Maint_Scripts — Summary
+
+This repository provides **linux-maint**, a Bash-based maintenance + health monitoring tool for Linux.
+It supports running locally on a machine and (optionally) orchestrating checks across a fleet over SSH.
+
+## What linux-maint does (high level)
+
+- Runs a set of **monitors** (scripts under `monitors/`) to check system health and operational posture.
+- Produces **human logs** and **machine-parseable artifacts** (summary lines / JSON) suitable for automation and alerting.
+- Can be used directly from the repository (repo mode) or installed to `/usr/local` (installed mode).
+
+## Primary CLI commands
+
+- `linux-maint run` — execute the health monitoring wrapper and generate artifacts.
+- `linux-maint status` — show last run status (overall + compact problems summary).
+- `linux-maint logs [N]` — show last N lines of the latest wrapper log.
+- `linux-maint init` — create initial config under `/etc/linux_maint`.
+- `linux-maint preflight` — preflight checks.
+- `linux-maint validate` — configuration validation.
+- `linux-maint doctor` — diagnostics (paths, timers, permissions, etc.).
+- `linux-maint install|uninstall` — install/remove into `/usr/local`.
+
+## Artifacts & output contract
+
+A run writes artifacts designed for both operations and automation:
+
+- Full run log:
+  - `/var/log/health/full_health_monitor_<timestamp>.log`
+  - symlink: `/var/log/health/full_health_monitor_latest.log`
+
+- Summary log (one-line-per-monitor; easiest for parsing):
+  - `/var/log/health/full_health_monitor_summary_<timestamp>.log`
+  - symlink: `/var/log/health/full_health_monitor_summary_latest.log`
+
+- Summary JSON:
+  - `/var/log/health/full_health_monitor_summary_<timestamp>.json`
+  - symlink: `/var/log/health/full_health_monitor_summary_latest.json`
+
+- Last status file:
+  - `/var/log/health/last_status_full` (timestamp/overall/exit_code/logfile)
+
+- Optional Prometheus textfile output:
+  - `/var/lib/node_exporter/textfile_collector/linux_maint.prom`
+
+### Summary line contract
+
+Each monitor emits summary lines like:
+
+```text
+monitor=<name> host=<target> status=<OK|WARN|CRIT|UNKNOWN|SKIP> node=<runner> key=value...
+```
+
+Notes:
+- Non-OK statuses should ideally include `reason=<token>`.
+- `SKIP` means the monitor intentionally did not evaluate due to missing optional config/baseline.
+
+## Monitor coverage (examples)
+
+Monitors in `monitors/` cover areas such as:
+
+- Preflight & config validation
+- Disk/inodes and disk trend monitoring
+- Network checks
+- Service checks
+- NTP drift
+- Patch/security updates
+- Storage health (mdraid/smart/nvme)
+- Kernel events
+- Certificates
+- NFS mounts
+- Ports baseline drift
+- Config drift
+- User anomalies
+- Backup checks
+- Inventory export
+
+## Documentation
+
+- `README.md` — quickstart and overview
+- `docs/reference.md` — detailed reference, artifacts, and contract
+- `docs/DARK_SITE.md` — offline/air-gapped usage
+- `docs/REASONS.md` — reason tokens meaning

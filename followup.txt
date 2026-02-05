@@ -1,0 +1,54 @@
+# linux-maint — Follow-up (Professional Roadmap)
+
+This is the short list of the most important improvements to make linux-maint a more reliable, maintainable and operator-friendly project.
+
+## P0 — Reliability & correctness (do first)
+
+1. **Automated tests for CLI + artifacts**
+   - Add tests to ensure:
+     - `linux-maint status` non-root installed mode prints *one* error+hint and exits.
+     - `linux-maint status` root mode prints: totals + minimal problem list, severity-sorted.
+     - `--verbose` still prints raw summary lines.
+     - `--problems N` caps at 100.
+   - Add a smoke test that runs the wrapper in local-only mode and validates artifacts exist.
+
+2. **Single source of truth for documentation**
+   - Ensure `docs/reference.md` matches actual behavior (flags, artifact paths, exit codes).
+   - Add an “Operator Quick Reference” section for on-call usage.
+
+3. **Exit code policy**
+   - Make exit codes consistent and documented (example):
+     - OK=0, WARN=1, CRIT=2, UNKNOWN=3
+
+## P1 — Operability
+
+4. **Status output options**
+   - Add optional `--quiet` mode: only overall + totals + problems (no paths/build info).
+   - Add optional `--json` mode combining `last_status_full` + summary JSON.
+
+5. **Packaging + systemd**
+   - Provide deb/rpm (or a well-documented tarball release).
+   - Ensure systemd service/timer install is robust and documented.
+
+6. **Notifications**
+   - Enhance email notifications to include the compact problems list.
+   - Optional: add webhook/Slack integration.
+
+## P2 — Monitor quality
+
+7. **Standardize reasons**
+   - Ensure every non-OK summary line includes `reason=<token>`.
+   - Keep reason tokens in `docs/REASONS.md` and treat it as a contract.
+
+8. **Consistency & performance**
+   - Avoid slow monitors blocking the whole run (timeouts; parallelism where safe).
+   - Improve caching/history where relevant (e.g., disk trend monitor).
+
+## P3 — Developer experience
+
+9. **Make targets**
+   - Add `make lint`, `make test`, `make install` shortcuts.
+
+10. **Pre-push / CI enforcement for meta files**
+   - Enforce that `summarize.txt` + `followup.txt` are updated when changes are pushed.
+   - Best practice: do this in CI (GitHub Actions) + optional local pre-push hook.
