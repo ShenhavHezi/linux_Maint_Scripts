@@ -59,20 +59,32 @@ SUMMARY_FILE="${SUMMARY_FILE:-$SUMMARY_DIR/full_health_monitor_summary_$(date +%
 trap 'rm -f "$tmp_summary"' EXIT
 
 # Minimal config (local mode)
-mkdir -p /etc/linux_maint
-[ -f /etc/linux_maint/servers.txt ] || echo "localhost" > /etc/linux_maint/servers.txt
-[ -f /etc/linux_maint/excluded.txt ] || : > /etc/linux_maint/excluded.txt
+# Minimal config (local mode)
+# In unprivileged environments (e.g. CI), fall back to a repo-local config dir.
+CFG_DIR="${LM_CFG_DIR:-/etc/linux_maint}"
+if ! mkdir -p "$CFG_DIR" 2>/dev/null; then
+  CFG_DIR="${LM_CFG_DIR_FALLBACK:-$REPO_DIR/.etc_linux_maint}"
+  mkdir -p "$CFG_DIR"
+fi
+[ -f "$CFG_DIR/servers.txt" ] || echo "localhost" > "$CFG_DIR/servers.txt"
+[ -f "$CFG_DIR/excluded.txt" ] || : > "$CFG_DIR/excluded.txt"
+
+# Point library defaults at our chosen config directory (do not override explicit env).
+export LM_SERVERLIST="${LM_SERVERLIST:-$CFG_DIR/servers.txt}"
+export LM_EXCLUDED="${LM_EXCLUDED:-$CFG_DIR/excluded.txt}"
+export LM_SERVICES="${LM_SERVICES:-$CFG_DIR/services.txt}"
+
 
 # service_monitor requires services.txt; provide safe defaults if missing
-if [ ! -s /etc/linux_maint/services.txt ]; then
-  cat > /etc/linux_maint/services.txt <<'SVC'
+if [ ! -s "$CFG_DIR/services.txt" ]; then
+  cat > "$CFG_DIR/services.txt" <<'SVC'
 # critical services
 sshd
 crond
 docker
 NetworkManager
 SVC
-  chmod 0644 /etc/linux_maint/services.txt
+  chmod 0644 "$CFG_DIR/services.txt"
 fi
 
 # Disable email unless explicitly enabled
