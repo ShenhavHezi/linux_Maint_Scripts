@@ -89,6 +89,9 @@ install_files(){
   install -D -m 0755 bin/linux-maint "$prefix/bin/linux-maint"
   install -d "$libexec"
 
+  # tools used by the CLI (installed-mode)
+  install -D -m 0755 tools/summary_diff.py "$libexec/summary_diff.py"
+
   # Explicit monitors list (exclude wrapper + lib)
   install -D -m 0755 \
     monitors/backup_check.sh monitors/cert_monitor.sh monitors/config_drift_monitor.sh monitors/health_monitor.sh \

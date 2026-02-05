@@ -319,11 +319,15 @@ case "$cmd" in
       exit 1
     fi
 
-    diff_tool="$REPO_ROOT/tools/summary_diff.py"
+    if [[ "$MODE" == "repo" ]]; then
+      diff_tool="$REPO_ROOT/tools/summary_diff.py"
+    else
+      diff_tool="$LIBEXEC/summary_diff.py"
+    fi
     if [[ ! -x "$diff_tool" ]]; then
       # In installed mode, tools/ may not exist; try a system python module not available; fallback to error.
       echo "Diff tool not found/executable: $diff_tool" >&2
-      echo "Hint: run from a git checkout (repo mode) to use tools/summary_diff.py" >&2
+      echo "Hint: ensure summary_diff.py is installed (expected at $LIBEXEC/summary_diff.py)" >&2
       exit 1
     fi
 
