@@ -56,7 +56,7 @@ jobs:
 
       - name: Build RPM
         run: |
-          ./packaging/rpm/build_rpm.sh 0.1.0
+          ./packaging/rpm/build_rpm.sh
 
       - name: Install RPM (smoke)
         run: |
