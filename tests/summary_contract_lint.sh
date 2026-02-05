@@ -5,12 +5,13 @@ set -euo pipefail
 # This test is intentionally tolerant: wrapper may return non-zero.
 
 REPO_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-LOG="$REPO_ROOT/.logs/full_health_monitor_latest.log"
+LOG_DIR="${LOG_DIR:-$REPO_ROOT/.logs}"
+LOG="$LOG_DIR/full_health_monitor_latest.log"
 
-mkdir -p "$REPO_ROOT/.logs" || true
+mkdir -p "$LOG_DIR" || true
 
 # best effort
-("$REPO_ROOT/run_full_health_monitor.sh" >/dev/null 2>&1 || true)
+(LOG_DIR="$LOG_DIR" "$REPO_ROOT/run_full_health_monitor.sh" >/dev/null 2>&1 || true)
 
 if [[ ! -f "$LOG" ]]; then
   echo "ERROR: wrapper log not found: $LOG" >&2
