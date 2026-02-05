@@ -15,3 +15,6 @@ README.md.bak
 
 # local test logs variants
 .logs_*/
+
+# python cache
+__pycache__/

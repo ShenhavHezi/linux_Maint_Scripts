@@ -192,6 +192,8 @@ esac
 
 {
   echo "SUMMARY_RESULT overall=$overall ok=$ok warn=$warn crit=$crit unknown=$unk skipped=$skipped finished=$(date -Is) exit_code=$worst"
+  echo "SUMMARY_MONITORS ok=$ok warn=$warn crit=$crit unknown=$unk skipped=$skipped"
+  echo "SUMMARY_RESULT_NOTE SUMMARY_RESULT counts are per-monitor-script exit codes; fleet counters are in SUMMARY_HOSTS derived from monitor= lines"
   echo "============================================================"
   # Final status summary: explicitly extract only standardized machine lines.
   # These come from lib/linux_maint.sh: lm_summary() -> lines starting with "monitor=".
@@ -292,12 +294,13 @@ ln -sfn "$(basename "$SUMMARY_FILE")" "$SUMMARY_LATEST_FILE" 2>/dev/null || true
 rm -f "$tmp_summary" 2>/dev/null || true
 
 # Also write JSON + Prometheus outputs (best-effort)
-SUMMARY_FILE="$SUMMARY_FILE" SUMMARY_JSON_FILE="$SUMMARY_JSON_FILE" SUMMARY_JSON_LATEST_FILE="$SUMMARY_JSON_LATEST_FILE" PROM_FILE="$PROM_FILE" python3 - <<'PY' || true
-import json, os, re
+SUMMARY_FILE="$SUMMARY_FILE" SUMMARY_JSON_FILE="$SUMMARY_JSON_FILE" SUMMARY_JSON_LATEST_FILE="$SUMMARY_JSON_LATEST_FILE" PROM_FILE="$PROM_FILE" LM_STATUS_FILE="$STATUS_FILE" python3 - <<'PY' || true
+import json, os
 summary_file=os.environ.get("SUMMARY_FILE")
 json_file=os.environ.get("SUMMARY_JSON_FILE")
 json_latest=os.environ.get("SUMMARY_JSON_LATEST_FILE")
 prom_file=os.environ.get("PROM_FILE")
+
 def parse_kv(line):
     parts=line.strip().split()
     d={}
@@ -306,24 +309,48 @@ def parse_kv(line):
             k,v=p.split("=",1)
             d[k]=v
     return d
+
 rows=[]
 if summary_file and os.path.exists(summary_file):
     with open(summary_file,"r",encoding="utf-8",errors="ignore") as f:
         for line in f:
             if line.startswith("monitor="):
                 rows.append(parse_kv(line))
-if json_file and rows:
+
+# Wrap rows with metadata so consumers can use one stable JSON contract.
+# Back-compat: set LM_JSON_LEGACY_LIST=1 to output only the list.
+legacy = os.environ.get("LM_JSON_LEGACY_LIST","0") == "1"
+
+def read_status_file(path):
+    d={}
+    try:
+        with open(path,"r",encoding="utf-8",errors="ignore") as f:
+            for line in f:
+                line=line.strip()
+                if not line or "=" not in line: continue
+                k,v=line.split("=",1)
+                d[k]=v
+    except FileNotFoundError:
+        pass
+    return d
+
+status_file = os.environ.get("LM_STATUS_FILE")
+meta = read_status_file(status_file) if status_file else {}
+
+payload = rows if legacy else {"meta": meta, "rows": rows}
+
+if json_file:
     os.makedirs(os.path.dirname(json_file), exist_ok=True)
     with open(json_file,"w",encoding="utf-8") as f:
-        json.dump(rows,f,indent=2,sort_keys=True)
+        json.dump(payload,f,indent=2,sort_keys=True)
     if json_latest:
         try:
             if os.path.islink(json_latest) or os.path.exists(json_latest):
                 try: os.unlink(json_latest)
                 except: pass
-            import os
             os.symlink(os.path.basename(json_file),json_latest)
         except: pass
+
 status_map={"OK":0,"WARN":1,"CRIT":2,"UNKNOWN":3,"SKIP":3}
 if prom_file and rows:
     try:
