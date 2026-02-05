@@ -109,6 +109,10 @@ install_files(){
   mkdir -p /etc/linux_maint /etc/linux_maint/baselines /var/log/health /var/lib/linux_maint
 
   # Build/version info (optional; present in offline release tarballs)
+  # Ensure BUILD_INFO exists for installed-mode `linux-maint version`
+  if [ ! -f "BUILD_INFO" ] && [ -x "tools/gen_build_info.sh" ]; then
+    ./tools/gen_build_info.sh >/dev/null 2>&1 || true
+  fi
   mkdir -p "$prefix/share/linux_maint"
   # config templates for linux-maint init (installed-mode)
   mkdir -p "$prefix/share/linux_maint/templates"

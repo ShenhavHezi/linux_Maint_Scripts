@@ -14,6 +14,9 @@ rm -rf "$WORK"
 mkdir -p "$WORK"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
 
 # Create source tarball
+
+# Ensure BUILD_INFO matches VERSION+git sha for this build
+"$ROOT/tools/gen_build_info.sh" >/dev/null 2>&1 || true
 TARBALL="$WORK/SOURCES/linux-maint-${VERSION}.tar.gz"
 
 tmpdir="$WORK/src/linux-maint-${VERSION}"
