@@ -3,6 +3,17 @@
 `linux-maint` is a lightweight health/maintenance toolkit for Linux administrators.
 Run it locally or from a monitoring node over SSH, get structured logs + a simple OK/WARN/CRIT summary.
 
+
+## What you get
+
+- **Standardized summary contract** per monitor (`monitor=... host=... status=... reason=...`) for automation.
+- **Hardened wrapper**: if a monitor fails without emitting a summary line, the wrapper emits `status=UNKNOWN reason=no_summary_emitted`.
+- **Timeout protection** per monitor (`MONITOR_TIMEOUT_SECS`) to avoid hanging runs.
+- **Config/baseline gating with SKIP**: missing optional files produce `status=SKIP` with a reason.
+- **Fleet counters** derived from summary lines (`SUMMARY_HOSTS ok=.. warn=.. crit=.. unknown=.. skipped=..`).
+- Optional **Prometheus textfile** output for node_exporter.
+
+
 ## What it does
 
 - Runs a set of modular checks (disk/inodes, CPU/memory/load, services, network reachability, NTP drift, patch/reboot hints,
@@ -94,6 +105,26 @@ Templates are in `etc/linux_maint/*.example`; installed configs live in `/etc/li
 
 ## How to read results
 
+
+### Example: status output (compact)
+
+```text
+$ sudo linux-maint status
+...
+=== Summary (compact) ===
+totals: CRIT=1 WARN=2 UNKNOWN=0 SKIP=1 OK=14
+
+problems:
+CRIT ntp_drift_monitor reason=ntp_drift_high
+WARN patch_monitor reason=security_updates_pending
+SKIP backup_check reason=missing_targets_file
+```
+
+Tips:
+- `sudo linux-maint status --verbose` for raw summary lines
+- `sudo linux-maint status --problems 100` to list more problems (max 100)
+
+
 - **Exit codes** (wrapper): `0 OK`, `1 WARN`, `2 CRIT`, `3 UNKNOWN`
 - Logs:
   - Aggregated: `/var/log/health/` (installed mode)
@@ -160,6 +191,11 @@ Details in [`docs/reference.md`](docs/reference.md).
 - [Common knobs](#common-knobs)
 - [Full reference](docs/reference.md)
 
+
+
+## Operator quick reference
+
+See [`docs/QUICK_REFERENCE.md`](docs/QUICK_REFERENCE.md).
 
 ## Full reference
 

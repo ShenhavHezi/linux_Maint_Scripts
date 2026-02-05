@@ -282,7 +282,14 @@ After installation, use the `linux-maint` CLI as the primary interface.
 
 - `linux-maint run` *(root required)*: run the full wrapper (`run_full_health_monitor.sh`).
 
-- `linux-maint status` *(root required)*: show the last run summary + recent WARN/CRIT/SKIP lines.
+- `linux-maint status` *(root required)*: show last run metadata plus a compact, severity-sorted problems summary by default. Use `--verbose` for raw summary lines.
+
+Status flags (installed mode):
+
+- `--verbose` — show raw summary lines
+- `--problems N` — number of problem entries to display (default 20, max 100)
+- `--only OK|WARN|CRIT|UNKNOWN|SKIP` — filter by status
+
 
 - `linux-maint logs [n]` *(root required)*: tail the latest wrapper log (default `n=200`).
 
