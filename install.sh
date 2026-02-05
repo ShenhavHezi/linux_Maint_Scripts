@@ -110,6 +110,9 @@ install_files(){
 
   # Build/version info (optional; present in offline release tarballs)
   mkdir -p "$prefix/share/linux_maint"
+  # config templates for linux-maint init (installed-mode)
+  mkdir -p "$prefix/share/linux_maint/templates"
+  cp -a etc/linux_maint "$prefix/share/linux_maint/templates/"
   if [ -f "BUILD_INFO" ]; then
     install -m 0644 BUILD_INFO "$prefix/share/linux_maint/BUILD_INFO"
   fi

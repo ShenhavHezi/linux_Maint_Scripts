@@ -504,11 +504,11 @@ case "$cmd" in
     fi
 
     CFG_DIR="/etc/linux_maint"
+    # Prefer repo templates in repo mode; in installed mode use PREFIX share templates.
     SRC_DIR="$REPO_ROOT/etc/linux_maint"
-    if [[ "$MODE" == "installed" && ! -d "$SRC_DIR" ]]; then
-      # When running the installed CLI, REPO_ROOT points to /usr/local/bin/.. which is not a checkout.
-      # User should run init from a git checkout OR copy templates manually.
-      SRC_DIR=""
+    if [[ "$MODE" == "installed" ]]; then
+      ALT="$SHARE/templates/linux_maint"
+      [[ -d "$ALT" ]] && SRC_DIR="$ALT"
     fi
     if [[ -z "$SRC_DIR" || ! -d "$SRC_DIR" ]]; then
       echo "ERROR: templates not found at $SRC_DIR" >&2
