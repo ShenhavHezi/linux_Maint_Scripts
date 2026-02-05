@@ -58,6 +58,21 @@ jobs:
         run: |
           ./packaging/rpm/build_rpm.sh 0.1.0
 
+      - name: Install RPM (smoke)
+        run: |
+          dnf -y install /tmp/linux-maint-rpmbuild/RPMS/noarch/*.rpm
+          linux-maint --help | head -n 40
+          linux-maint version || true
+          # systemd checks (may be limited inside container, but unit files should exist)
+          test -f /usr/lib/systemd/system/linux-maint.timer
+          test -f /usr/lib/systemd/system/linux-maint.service
+          systemctl is-enabled linux-maint.timer || true
+          systemctl is-active linux-maint.timer || true
+          linux-maint doctor || true
+          # basic run (best-effort; may fail in container, should not hang)
+          timeout 60s /usr/sbin/run_full_health_monitor.sh || true
+          test -f /var/log/health/last_status_full || true
+
       - name: Upload RPM artifacts
         uses: actions/upload-artifact@v4
         with:
