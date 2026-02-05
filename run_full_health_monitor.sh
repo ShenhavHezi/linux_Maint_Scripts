@@ -36,6 +36,14 @@ if [[ -d "$REPO_DIR/monitors" ]]; then
 else
   LOG_DIR_DEFAULT="/var/log/health"
 fi
+
+# Load installed configuration files (best-effort).
+if [ -f "$REPO_DIR/lib/linux_maint_conf.sh" ]; then
+  # shellcheck disable=SC1090
+  . "$REPO_DIR/lib/linux_maint_conf.sh" || true
+  if command -v lm_load_config >/dev/null 2>&1; then lm_load_config || true; fi
+fi
+
 LOG_DIR="${LOG_DIR:-$LOG_DIR_DEFAULT}"
 STATUS_FILE="$LOG_DIR/last_status_full"
 

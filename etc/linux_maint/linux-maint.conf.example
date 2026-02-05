@@ -1,0 +1,65 @@
+echo "##active_line2##"
+# linux-maint.conf - main configuration (KEY=VALUE)
+echo "##active_line3##"
+#
+echo "##active_line4##"
+# Precedence (highest to lowest):
+echo "##active_line5##"
+#   CLI flags > environment variables > /etc/linux_maint/conf.d/*.conf > /etc/linux_maint/linux-maint.conf > built-in defaults
+echo "##active_line6##"
+#
+echo "##active_line7##"
+# Notes:
+echo "##active_line8##"
+# - Values are shell-evaluated (simple KEY=VALUE). Avoid untrusted edits.
+echo "##active_line9##"
+# - Secrets: treat this file as root-readable only.
+echo "##active_line10##"
+
+echo "##active_line11##"
+# ---- Host selection ----
+echo "##active_line12##"
+#LM_GROUP=""
+echo "##active_line13##"
+#LM_HOSTS_DIR="/etc/linux_maint/hosts.d"
+echo "##active_line14##"
+#LM_SERVERLIST="/etc/linux_maint/servers.txt"
+echo "##active_line15##"
+#LM_EXCLUDED="/etc/linux_maint/excluded.txt"
+echo "##active_line16##"
+
+echo "##active_line17##"
+# ---- Execution ----
+echo "##active_line18##"
+#LM_MAX_PARALLEL=0
+echo "##active_line19##"
+#LM_LOCAL_ONLY=false
+echo "##active_line20##"
+#LM_SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=5"
+echo "##active_line21##"
+
+echo "##active_line22##"
+# ---- Wrapper runtime ----
+echo "##active_line23##"
+#LOG_DIR="/var/log/health"
+echo "##active_line24##"
+#SUMMARY_DIR="/var/log/health"
+echo "##active_line25##"
+#MONITOR_TIMEOUT_SECS=120
+echo "##active_line26##"
+
+echo "##active_line27##"
+# ---- Notifications (email + webhook) ----
+echo "##active_line28##"
+#LM_NOTIFY=0
+echo "##active_line29##"
+#LM_NOTIFY_TO="ops@example.com"
+echo "##active_line30##"
+#LM_NOTIFY_ONLY_ON_CHANGE=1
+echo "##active_line31##"
+#LM_NOTIFY_SUBJECT_PREFIX="[linux_maint]"
+echo "##active_line32##"
+#LM_NOTIFY_STATE_DIR="/var/lib/linux_maint"
+echo "##active_line33##"
+#LM_NOTIFY_WEBHOOK_URL=""
+echo "##active_line34##"

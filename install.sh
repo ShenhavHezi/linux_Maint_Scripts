@@ -85,6 +85,7 @@ install_files(){
   echo "  monitors: $libexec/"
 
   install -D -m 0755 lib/linux_maint.sh "$lib/linux_maint.sh"
+  install -D -m 0755 lib/linux_maint_conf.sh "$lib/linux_maint_conf.sh"
   install -D -m 0755 run_full_health_monitor.sh "$sbin/run_full_health_monitor.sh"
   install -D -m 0755 bin/linux-maint "$prefix/bin/linux-maint"
   install -d "$libexec"
@@ -107,6 +108,14 @@ install_files(){
 
   # Directories
   mkdir -p /etc/linux_maint /etc/linux_maint/baselines /var/log/health /var/lib/linux_maint
+
+  # main config (do not overwrite if exists)
+  if [ ! -f /etc/linux_maint/linux-maint.conf ]; then
+    install -m 0640 etc/linux_maint/linux-maint.conf.example /etc/linux_maint/linux-maint.conf
+    chown root:root /etc/linux_maint/linux-maint.conf || true
+  fi
+  mkdir -p /etc/linux_maint/conf.d
+  chmod 0755 /etc/linux_maint/conf.d || true
 
   # Build/version info (optional; present in offline release tarballs)
   # Ensure BUILD_INFO exists for installed-mode `linux-maint version`
