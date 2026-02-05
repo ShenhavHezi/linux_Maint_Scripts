@@ -106,6 +106,9 @@ Templates are in `etc/linux_maint/*.example`; installed configs live in `/etc/li
 ## How to read results
 
 
+Reason tokens reference: [`docs/REASONS.md`](docs/REASONS.md).
+
+
 ### Example: status output (compact)
 
 ```text
@@ -154,6 +157,7 @@ Notes:
 - For non-`OK` statuses, monitors typically include a `reason=<token>` key (e.g. `ssh_unreachable`, `baseline_missing`, `collect_failed`).
 - Full contract details and artifact locations are documented in [`docs/reference.md`](docs/reference.md#output-contract-machine-parseable-summary-lines).
 - `SKIP` means the monitor intentionally did not evaluate (e.g., missing optional config/baseline).
+- See [`docs/REASONS.md`](docs/REASONS.md) for standardized `reason=` tokens.
 
 ## Common knobs
 

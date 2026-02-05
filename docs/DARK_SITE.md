@@ -82,3 +82,25 @@ sudo linux-maint logs 200
 - Installed mode is intended to run as root (or via sudo) because it uses `/var/log` and `/var/lock`.
 - For per-monitor configuration, see files under `/etc/linux_maint/` (created by the installer).
 - Full reference: [`reference.md`](reference.md)
+
+
+## Verify integrity (recommended)
+
+When transferring tarballs/packages into an air-gapped environment, verify integrity:
+
+```bash
+sha256sum linux-maint-*.tar.gz > linux-maint.sha256
+# transfer both files
+sha256sum -c linux-maint.sha256
+```
+
+If you use an internal artifact repository, store the checksum alongside the artifact.
+
+## What to transfer
+
+At minimum transfer:
+- the release tarball (or git checkout) of this repository
+- any required OS packages / dependencies (via your internal mirrors)
+- your environment-specific config files under `/etc/linux_maint/`
+
+Tip: `linux-maint make-tarball` can help create a self-contained bundle for offline use.
