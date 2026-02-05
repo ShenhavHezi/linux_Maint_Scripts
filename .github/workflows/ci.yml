@@ -40,3 +40,26 @@ jobs:
         run: |
           chmod +x tests/smoke.sh
           ./tests/smoke.sh || true
+
+  build-rpm-rocky9:
+    runs-on: ubuntu-latest
+    container:
+      image: rockylinux:9
+    steps:
+      - name: Install build tools
+        run: |
+          dnf -y update
+          dnf -y install rpm-build rsync tar systemd-rpm-macros python3
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build RPM
+        run: |
+          ./packaging/rpm/build_rpm.sh 0.1.0
+
+      - name: Upload RPM artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-maint-rpm-rocky9
+          path: /tmp/linux-maint-rpmbuild/RPMS/**/*.rpm
