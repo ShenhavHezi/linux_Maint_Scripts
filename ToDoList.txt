@@ -13,6 +13,8 @@ Guiding principles:
 ## P0 — Production safety & correctness (highest priority)
 
 ### 1) Formalize exit codes + severity semantics
+
+NOTE: The wrapper already documents and uses exit codes 0/1/2/3; the remaining work is to ensure **every monitor** follows it consistently and tests enforce it.
 - Define a stable policy and enforce it across wrapper + monitors:
   - `OK=0`, `WARN=1`, `CRIT=2`, `UNKNOWN=3`
 - Ensure **every monitor** uses these exit codes.
@@ -30,7 +32,7 @@ Guiding principles:
 - Guard against command injection:
   - never eval untrusted config content
   - carefully quote hostnames, paths, ssh options
-- Add a `--dry-run` / `--print-plan` mode (if not already solid) for auditing target hosts.
+- Keep and document `linux-maint run --dry-run` for auditing target hosts; add tests to ensure it never executes remote commands.
 
 ### 4) Tests that match real operator behavior
 Add CI tests covering:
@@ -66,12 +68,10 @@ Add CI tests covering:
 
 ---
 
-## P2 — Packaging, deployment, and compatibility
+## P2 — Packaging, deployment, and compatibility (partially exists)
 
 ### 8) First-class packaging
-- Provide at least one of:
-  - `.deb` + `.rpm`, or
-  - release tarball + install script that is idempotent
+- Provide packaging that is easy to consume. Current repo already includes **RPM packaging** under `packaging/rpm/` and a tarball builder; next step is to harden and document the release workflow.
 - Package should install:
   - `/usr/local/bin/linux-maint`
   - wrapper and libexec helpers
@@ -123,7 +123,7 @@ Add CI tests covering:
   - how to run tests locally
 
 ### 15) CI enforcement for meta docs
-- Enforce that `summarize.txt` and `followup.txt` stay current:
+- Enforce that `summarize.txt` and `ToDoList.txt` stay current:
   - GitHub Action that fails if significant code changes happen without updating these files
   - optional local `pre-push` hook for convenience
 
