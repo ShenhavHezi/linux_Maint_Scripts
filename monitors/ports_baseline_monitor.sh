@@ -236,7 +236,7 @@ run_for_host() {
   if [ "$new_count" -gt 0 ] || [ "$removed_count" -gt 0 ]; then
     status=WARN
   fi
-  lm_summary "ports_baseline_monitor" "$host" "$status" new=$new_count removed=$removed_count
+  lm_summary "ports_baseline_monitor" "$host" "$status" reason=ports_baseline_changed new=$new_count removed=$removed_count
   # legacy:
   # echo "ports_baseline_monitor host=$host status=$status new=$new_count removed=$removed_count"
 
