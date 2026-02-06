@@ -39,7 +39,7 @@ jobs:
       - name: Smoke test (best-effort)
         run: |
           chmod +x tests/smoke.sh
-          ./tests/smoke.sh || true
+          ./tests/smoke.sh
 
   build-rpm-rocky9:
     runs-on: ubuntu-latest
