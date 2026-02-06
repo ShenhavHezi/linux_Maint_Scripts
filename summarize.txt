@@ -2,55 +2,73 @@
 
 ## What this project is
 
-**linux-maint** is a Bash-based maintenance + health monitoring toolkit for Linux servers.
-It runs a suite of small “monitors” and generates both:
+**linux-maint** is a Bash-based maintenance and health-monitoring toolkit for Linux.
+It runs a suite of small “monitors” and produces both:
 
 - **Human-readable logs** for troubleshooting
-- **Machine-parseable summary artifacts** (line protocol + JSON) for automation/alerting
+- **Machine-parseable artifacts** (summary line protocol + JSON) for automation, alerting, and reporting
 
 It supports:
 
 - **Repo mode**: run from the git checkout (useful for development/CI)
-- **Installed mode**: install to `/usr/local` with a stable wrapper + paths (recommended for production)
-- **Local-only or fleet orchestration**: wrapper/CLI are designed to support multi-host runs over SSH (config-driven)
+- **Installed mode**: install to `/usr/local` with stable paths and optional systemd timer/logrotate integration
+- **Local-only and fleet orchestration**: CLI/wrapper support targeting multiple hosts over SSH (config-driven)
 
-## How it works (architecture)
+## High-level architecture
 
-- `run_full_health_monitor.sh` is the main wrapper that:
-  - runs monitor scripts from `monitors/`
-  - enforces a wrapper-level timeout per monitor (`timeout $MONITOR_TIMEOUT_SECS ...` when available)
-  - hardens the output contract (if a monitor exits non-zero without emitting a summary line, wrapper emits `status=UNKNOWN reason=no_summary_emitted`)
-  - computes an overall result (`OK/WARN/CRIT/UNKNOWN`) based on worst monitor exit code
+- `run_full_health_monitor.sh` (wrapper)
+  - Runs monitor scripts from `monitors/` (installed mode uses copies under `/usr/local/libexec/linux_maint/`).
+  - Enforces a **timeout per monitor** (uses `timeout` when available; controlled by `MONITOR_TIMEOUT_SECS`).
+  - Enforces the **summary contract**:
+    - if a monitor exits non-zero but emits no `monitor=` summary line, wrapper emits:
+      - `status=UNKNOWN reason=no_summary_emitted`
+  - Computes overall result based on the **worst** monitor exit code.
 
-- `bin/linux-maint` is the CLI entrypoint that:
-  - runs the wrapper
-  - provides status/logs/doctor/config commands
-  - supports repo vs installed mode behavior
+- `bin/linux-maint` (CLI)
+  - Entry point for operators.
+  - Handles repo vs installed mode.
+  - Provides convenience commands: `run`, `status`, `logs`, `doctor`, `init`, `preflight`, `validate`, `install`, `uninstall`.
 
-## Primary CLI commands
+- `lib/linux_maint.sh` + `lib/linux_maint_conf.sh`
+  - Shared library and configuration loader (including `/etc/linux_maint/linux-maint.conf` and `/etc/linux_maint/conf.d/*`).
+
+## Primary CLI commands (operator-facing)
 
 - `linux-maint run`
   - Executes the wrapper and writes artifacts.
+  - Supports fleet flags such as `--group`, `--hosts`, `--exclude`, `--parallel`, `--shuffle`, `--limit`, `--dry-run`.
 
 - `linux-maint status`
   - Shows last run metadata (from `last_status_full`) plus a **compact admin summary** by default:
-    - totals by severity (CRIT/WARN/UNKNOWN/SKIP/OK)
-    - a severity-sorted minimal problems list (monitor name + optional `reason=`)
+    - totals by severity (`CRIT/WARN/UNKNOWN/SKIP/OK`)
+    - severity-sorted minimal problems list (`STATUS monitor [reason=...]`)
   - Flags:
-    - `--verbose` (print raw summary lines)
+    - `--verbose` (show raw summary lines)
     - `--problems N` (default 20, max 100)
     - `--only OK|WARN|CRIT|UNKNOWN|SKIP`
 
 - `linux-maint logs [N]` — tail latest wrapper log
+- `linux-maint doctor` — diagnostics (paths, timers, permissions)
 - `linux-maint init` — create initial config under `/etc/linux_maint`
 - `linux-maint preflight` — preflight checks
 - `linux-maint validate` — validate configuration
-- `linux-maint doctor` — diagnostics (paths, timers, permissions)
-- `linux-maint install|uninstall` — install/remove into `/usr/local`
+- `linux-maint install|uninstall` — wrapper around `install.sh`
+
+## Exit codes
+
+The project standard is:
+- `0` = OK
+- `1` = WARN
+- `2` = CRIT
+- `3` = UNKNOWN/ERROR
+
+Wrapper returns the worst exit code across all executed monitors.
 
 ## Output artifacts
 
-A run produces the following (installed mode paths shown; repo mode writes into `./.logs/`):
+Artifacts are intended to be stable and automation-friendly.
+
+Installed mode (default locations):
 
 - Full run log:
   - `/var/log/health/full_health_monitor_<timestamp>.log`
@@ -70,6 +88,8 @@ A run produces the following (installed mode paths shown; repo mode writes into 
 - Optional Prometheus textfile (node_exporter textfile collector):
   - `/var/lib/node_exporter/textfile_collector/linux_maint.prom`
 
+Repo mode writes equivalent artifacts under `./.logs/`.
+
 ## Summary contract (line protocol)
 
 Each monitor should emit at least one summary line:
@@ -80,14 +100,14 @@ monitor=<name> host=<target> status=<OK|WARN|CRIT|UNKNOWN|SKIP> node=<runner> ke
 
 Notes:
 - Non-OK should ideally include `reason=<token>` (see `docs/REASONS.md`).
-- Wrapper emits `SKIP` lines for monitors gated by missing optional config.
+- Wrapper emits `SKIP` summary lines for monitors gated by missing optional config/baselines.
 
 ## Included monitors (current)
 
 Located in `monitors/`:
 
 - `preflight_check` — environment and prerequisites
-- `config_validate` — validate configuration (wrapper treats warnings as non-fatal)
+- `config_validate` — validate configuration (wrapper treats validation warnings as non-fatal)
 - `health_monitor` — general health checks / aggregation
 - `inode_monitor` — inode usage
 - `disk_trend_monitor` — disk usage trends
@@ -108,11 +128,35 @@ Located in `monitors/`:
 ## Configuration
 
 Primary configuration lives under `/etc/linux_maint/`.
-Some monitors are gated by optional config/baseline files (wrapper will emit `SKIP` if missing).
+
+Notable config features:
+- Main config: `/etc/linux_maint/linux-maint.conf`
+- Optional drop-ins: `/etc/linux_maint/conf.d/*.conf`
+- Additional lists/baselines under `/etc/linux_maint/` (hosts, excluded, services, ports baseline, certs, users/sudoers baselines, etc.)
+
+Some monitors are gated by optional config/baseline files; wrapper emits `status=SKIP reason=missing:<path>`.
+
+## Packaging / installation
+
+- `install.sh` supports:
+  - `--with-user` (optional service user)
+  - `--with-timer` (systemd timer)
+  - `--with-logrotate`
+  - `--uninstall` and optional `--purge`
+- RPM packaging exists under `packaging/rpm/` (spec + service/timer files).
+
+## Tooling
+
+- `tools/make_tarball.sh` — create an offline tarball
+- `tools/gen_build_info.sh` — build metadata
+- `tools/summary_diff.py` — compare/parse summary output (used by installed mode)
+- `tools/update_readme_defaults.py` — keep docs defaults in sync
 
 ## Documentation
 
 - `README.md` — overview + quickstart
-- `docs/reference.md` — full reference: monitors, knobs, offline/air-gapped, CI
+- `docs/QUICK_REFERENCE.md` — operator cheat sheet
+- `docs/reference.md` — full reference (monitors, knobs, offline/air-gapped, install)
 - `docs/DARK_SITE.md` — offline/air-gapped notes
 - `docs/REASONS.md` — reason tokens contract
+- `ToDoList.txt` — prioritized actionable backlog
