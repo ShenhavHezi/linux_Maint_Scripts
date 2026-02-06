@@ -27,3 +27,42 @@ jobs:
             git --no-pager diff
             exit 1
           fi
+
+  require_meta_updates_on_code_changes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Ensure ToDoList.txt or summarize.txt updated when code changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # files changed in the PR
+          changed=$(git diff --name-only "$BASE_SHA".."HEAD_SHA")
+
+          echo "Changed files:" 
+          echo "$changed"
+
+          # Define what we consider "code" changes (broad but reasonable for this repo)
+          code_changed=$(echo "$changed" | grep -E '^(bin/|lib/|monitors/|tools/|packaging/|run_full_health_monitor\.sh$|install\.sh$|tests/)' || true)
+
+          if [ -z "$code_changed" ]; then
+            echo "No code changes detected; meta-doc update not required."
+            exit 0
+          fi
+
+          meta_touched=$(echo "$changed" | grep -E '^(ToDoList\.txt|summarize\.txt)$' || true)
+
+          if [ -z "$meta_touched" ]; then
+            echo "ERROR: Code changes detected, but neither ToDoList.txt nor summarize.txt was updated." >&2
+            echo "Please update ToDoList.txt (roadmap) and/or summarize.txt (capabilities) as part of this PR." >&2
+            exit 1
+          fi
+
+          echo "Meta docs updated: $meta_touched"

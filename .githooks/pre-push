@@ -1,10 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# 1) Keep summarize.txt autogen sections up to date
 python3 tools/gen_summarize.py
 
 if ! git diff --quiet; then
   echo "ERROR: summarize.txt is out of date. Please commit the changes before pushing." >&2
   git --no-pager diff
   exit 1
+fi
+
+# 2) If this push includes code changes, require ToDoList.txt or summarize.txt updates
+# Compare local HEAD against upstream tracking branch if it exists.
+upstream=$(git rev-parse --abbrev-ref --symbolic-full-name @{u} 2>/dev/null || true)
+if [ -z "$upstream" ]; then
+  exit 0
+fi
+
+changed=$(git diff --name-only "$upstream"..HEAD)
+code_changed=$(echo "$changed" | grep -E '^(bin/|lib/|monitors/|tools/|packaging/|run_full_health_monitor\.sh$|install\.sh$|tests/)' || true)
+
+if [ -n "$code_changed" ]; then
+  meta_touched=$(echo "$changed" | grep -E '^(ToDoList\.txt|summarize\.txt)$' || true)
+  if [ -z "$meta_touched" ]; then
+    echo "ERROR: Code changes detected since $upstream, but neither ToDoList.txt nor summarize.txt was updated." >&2
+    echo "Please update ToDoList.txt and/or summarize.txt and commit before pushing." >&2
+    exit 1
+  fi
 fi
