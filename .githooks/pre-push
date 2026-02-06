@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+python3 tools/gen_summarize.py
+
+if ! git diff --quiet; then
+  echo "ERROR: summarize.txt is out of date. Please commit the changes before pushing." >&2
+  git --no-pager diff
+  exit 1
+fi

@@ -1,0 +1,29 @@
+name: Docs consistency
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  summarize_autogen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Regenerate summarize.txt autogen sections
+        run: |
+          python3 tools/gen_summarize.py
+
+      - name: Ensure working tree is clean
+        run: |
+          if ! git diff --quiet; then
+            echo "summarize.txt is out of date. Run: python3 tools/gen_summarize.py and commit the result." >&2
+            git --no-pager diff
+            exit 1
+          fi

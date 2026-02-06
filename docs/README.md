@@ -16,3 +16,15 @@ This directory contains the extended documentation for **linux-maint**.
 - offline/air-gapped installation notes
 - development/CI notes
 - upgrading, uninstall, log rotation
+
+
+## Developer hooks (optional)
+
+This repo includes optional git hooks under `.githooks/`.
+To enable them locally:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+The `pre-push` hook ensures `summarize.txt` autogen sections are up to date.
