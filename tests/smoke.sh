@@ -22,7 +22,8 @@ LM_LOGFILE=/tmp/config_validate.log LM_LOCKDIR=/tmp bash "$ROOT_DIR/monitors/con
 # lm_for_each_host_rc aggregation test
 bash "$ROOT_DIR/tests/lm_for_each_host_rc_test.sh" >/dev/null
 
-# status output contract + reason lint (requires sudo on environments that support it)
+# wrapper artifacts + status output contract + reason lint (requires sudo on environments that support it)
+bash "$ROOT_DIR/tests/wrapper_artifacts_test.sh" >/dev/null || true
 bash "$ROOT_DIR/tests/status_contract_test.sh" >/dev/null || true
 bash "$ROOT_DIR/tests/summary_reason_lint.sh" >/dev/null || true
 

@@ -12,6 +12,8 @@ Conventions:
 
 ## P0 — Production safety & correctness (do first)
 
+DONE: Added CI-enforced smoke tests including status output contract and reason= linting.
+
 ### P0.1 Enforce exit-code policy across all monitors
 
 **Why**: Wrapper already maps `0/1/2/3` to `OK/WARN/CRIT/UNKNOWN`, but if monitors don’t consistently follow it, overall results and automation are unreliable.
@@ -53,7 +55,7 @@ Conventions:
 
 ---
 
-### P0.3 Add CI smoke tests for wrapper artifacts
+### P0.3 Add CI smoke tests for wrapper artifacts (DONE)
 
 **Where**:
 - `tests/` (new test script)
@@ -71,7 +73,7 @@ Conventions:
 
 ---
 
-### P0.4 Security hardening for SSH/fleet mode
+### P0.4 Security hardening for SSH/fleet mode (IN PROGRESS)
 
 **Why**: Fleet mode runs commands on remote systems; defaults must be safe.
 
