@@ -28,6 +28,9 @@ bash "$ROOT_DIR/tests/monitor_exit_codes_test.sh" >/dev/null
 # Monitor summary emission contract (each monitor must emit monitor= lines)
 bash "$ROOT_DIR/tests/monitor_summary_emission_test.sh" >/dev/null
 
+# Security lint: forbid eval usage
+bash "$ROOT_DIR/tests/no_eval_lint.sh" >/dev/null
+
 # Fleet safety: --dry-run must not invoke ssh
 bash "$ROOT_DIR/tests/dry_run_no_ssh_test.sh" >/dev/null
 

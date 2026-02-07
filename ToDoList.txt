@@ -73,7 +73,7 @@ Note: In CI, wrapper/status artifact checks are executed only when passwordless 
 
 ---
 
-### P0.4 Security hardening for SSH/fleet mode (IN PROGRESS: dry-run no-ssh test + safer defaults + validation) (IN PROGRESS)
+### P0.4 Security hardening for SSH/fleet mode (DONE) (IN PROGRESS)
 
 **Why**: Fleet mode runs commands on remote systems; defaults must be safe.
 
