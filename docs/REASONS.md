@@ -17,8 +17,8 @@ monitor=<name> host=<host> status=<OK|WARN|CRIT|UNKNOWN|SKIP> node=<runner> [rea
 
 - Allowed `status` values: `OK`, `WARN`, `CRIT`, `UNKNOWN`, `SKIP`.
 - `monitor=` lines should be emitted **at least once per executed monitor**.
-- For non-OK statuses (`WARN|CRIT|UNKNOWN`), include `reason=` whenever practical.
-  - If a script truly cannot determine a reason, omit it (best-effort). 
+- For non-OK statuses (`WARN|CRIT|UNKNOWN|SKIP`), include `reason=`.
+  - If a script truly cannot determine a reason, use `reason=unknown` (avoid omitting).
 - `reason` values are **lower_snake_case**.
 
 ## Recommended `reason` tokens
@@ -27,6 +27,9 @@ These are cross-monitor, reusable tokens. Prefer these before inventing a new on
 
 ### Common
 - `ssh_unreachable` — cannot reach host via SSH / command execution
+- `missing_dependency` — required command missing on runner/host
+- `missing_optional_cmd` — optional command missing (monitor skipped/degraded)
+- `no_summary_emitted` — monitor exited without emitting a summary line (wrapper fallback)
 - `timeout` — command timed out
 - `not_installed` — required tool/service missing
 - `permission_denied` — permission problem reading state/logs/etc
