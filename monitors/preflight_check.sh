@@ -18,13 +18,13 @@ LM_LOGFILE="${LM_LOGFILE:-/var/log/preflight_check.log}"
 lm_require_singleton "preflight_check"
 
 # Required commands
-REQ_CMDS=(bash awk sed grep df ssh)
+REQ_CMDS=(awk sed grep df ssh)
 # Optional commands that improve coverage
 OPT_CMDS=(openssl ss netstat journalctl smartctl nvme mail timeout)
 
 ensure_dirs(){ mkdir -p "$(dirname "$LM_LOGFILE")" /var/lib/linux_maint 2>/dev/null || true; }
 
-has(){ command -v "$1" >/dev/null 2>&1; }
+has(){ lm_has_cmd "$1"; }
 
 main(){
   ensure_dirs
@@ -84,7 +84,7 @@ main(){
   if [ "$unreachable" -gt 0 ]; then
     reason=ssh_unreachable
   elif [ "$missing_req" -gt 0 ]; then
-    reason=missing_required_cmd
+    reason=missing_dependency
   elif [ "$writable_state" -eq 0 ] || [ "$writable_logs" -eq 0 ]; then
     reason=permission_denied
   elif [ "$missing_opt" -gt 0 ]; then
