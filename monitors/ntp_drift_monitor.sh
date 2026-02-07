@@ -1,4 +1,19 @@
 #!/bin/bash
+# shellcheck disable=SC1090
+set -euo pipefail
+
+# Defaults for standalone runs (wrapper sets these)
+: "${LM_LOCKDIR:=/tmp}"
+: "${LM_LOG_DIR:=.logs}"
+
+# Dependency checks (local runner)
+lm_require_cmd "ntp_drift_monitor" "localhost" awk || exit $?
+lm_require_cmd "ntp_drift_monitor" "localhost" grep || exit $?
+lm_require_cmd "ntp_drift_monitor" "localhost" sed || exit $?
+lm_require_cmd "ntp_drift_monitor" "localhost" chronyc --optional || true
+lm_require_cmd "ntp_drift_monitor" "localhost" ntpq --optional || true
+lm_require_cmd "ntp_drift_monitor" "localhost" timedatectl --optional || true
+
 # ntp_drift_monitor.sh - Monitor NTP/chrony/timesyncd sync state & clock drift
 # Author: Shenhav_Hezi
 # Version: 2.0 (refactored to use linux_maint.sh)
