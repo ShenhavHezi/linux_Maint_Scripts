@@ -310,6 +310,21 @@ Status flags (installed mode):
 ### Environment
 
 
+### SSH security defaults (fleet mode)
+
+By default, `LM_SSH_OPTS` uses safe non-interactive SSH settings and a dedicated known_hosts file:
+
+- `BatchMode=yes`
+- `ConnectTimeout=7`
+- `ServerAliveInterval=10`, `ServerAliveCountMax=2`
+- `StrictHostKeyChecking=accept-new`
+- `UserKnownHostsFile=/var/lib/linux_maint/known_hosts`
+- `GlobalKnownHostsFile=/dev/null`
+
+This avoids modifying root’s `~/.ssh/known_hosts` and reduces MITM risk compared to `StrictHostKeyChecking=no`.
+You can override via `linux-maint run --ssh-opts "..."` or environment `LM_SSH_OPTS`.
+
+
 
 - `PREFIX` (default: `/usr/local`) overrides installed locations.
 

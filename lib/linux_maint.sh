@@ -22,7 +22,7 @@ set -o pipefail
 : "${LM_GROUP:=}"                          # optional group name (maps to $LM_HOSTS_DIR/<group>.txt)
 : "${LM_LOCKDIR:=/var/lock}"
 : "${LM_STATE_DIR:=/var/tmp}"
-: "${LM_SSH_OPTS:=-o BatchMode=yes -o ConnectTimeout=7 -o ServerAliveInterval=10 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=accept-new}"
+: "${LM_SSH_OPTS:=-o BatchMode=yes -o ConnectTimeout=7 -o ServerAliveInterval=10 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/var/lib/linux_maint/known_hosts -o GlobalKnownHostsFile=/dev/null}"
 : "${LM_EMAIL_ENABLED:=true}"      # scripts can set LM_EMAIL_ENABLED=false to suppress email
 : "${LM_MAX_PARALLEL:=0}"          # 0 = sequential
 : "${LM_PREFIX:=}"                 # optional log prefix (script can set)
