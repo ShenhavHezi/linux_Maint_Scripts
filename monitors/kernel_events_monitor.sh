@@ -13,6 +13,11 @@ LM_LOGFILE="${LM_LOGFILE:-/var/log/kernel_events_monitor.log}"
 
 lm_require_singleton "kernel_events_monitor"
 
+# Dependency checks (local runner)
+lm_require_cmd "kernel_events_monitor" "localhost" awk || exit $?
+lm_require_cmd "kernel_events_monitor" "localhost" sed || exit $?
+lm_require_cmd "kernel_events_monitor" "localhost" grep || exit $?
+
 MAIL_SUBJECT_PREFIX='[Kernel Events Monitor]'
 EMAIL_ON_ALERT="true"
 

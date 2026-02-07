@@ -21,6 +21,11 @@ LM_LOGFILE="${LM_LOGFILE:-/var/log/storage_health_monitor.log}"
 
 lm_require_singleton "storage_health_monitor"
 
+# Dependency checks (local runner)
+lm_require_cmd "storage_health_monitor" "localhost" awk || exit $?
+lm_require_cmd "storage_health_monitor" "localhost" sed || exit $?
+lm_require_cmd "storage_health_monitor" "localhost" grep || exit $?
+
 MAIL_SUBJECT_PREFIX='[Storage Health Monitor]'
 EMAIL_ON_ISSUE="true"
 
