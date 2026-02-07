@@ -188,7 +188,7 @@ Note: In CI, wrapper/status artifact checks are executed only when passwordless 
 
 ---
 
-### P2.3 Platform/dependency detection (IN PROGRESS: added lm_require_cmd + network monitor missing dep handling)
+### P2.3 Platform/dependency detection (IN PROGRESS: standardized lm_require_cmd across more monitors + added forced-missing tests)
 
 **Why**: missing commands should degrade gracefully and explain why.
 
