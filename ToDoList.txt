@@ -96,7 +96,7 @@ Note: In CI, wrapper/status artifact checks are executed only when passwordless 
 
 ## P1 — Operability (on-call quality)
 
-### P1.1 `linux-maint status --quiet`
+### P1.1 `linux-maint status --quiet` (DONE)
 
 **Why**: On-call wants the shortest possible output.
 

@@ -336,6 +336,7 @@ case "$cmd" in
     ONLY=""
     TAIL_N=200
     VERBOSE=0
+    QUIET=0
     PROB_N=20
 
     while [[ $# -gt 0 ]]; do
@@ -343,9 +344,10 @@ case "$cmd" in
         --only) ONLY="$2"; shift 2;;
         --tail) TAIL_N="$2"; shift 2;;
         --verbose) VERBOSE=1; shift 1;;
+        --quiet) QUIET=1; shift 1;;
         --problems) PROB_N="$2"; shift 2;;
         -h|--help)
-          echo "Usage: linux-maint status [--only OK|WARN|CRIT|UNKNOWN|SKIP] [--tail N] [--verbose] [--problems N (max 100)]"
+          echo "Usage: linux-maint status [--only OK|WARN|CRIT|UNKNOWN|SKIP] [--tail N] [--verbose] [--quiet] [--problems N (max 100)]"
           exit 0;;
         *) echo "Unknown status flag: $1" >&2; exit 2;;
       esac
@@ -359,6 +361,7 @@ case "$cmd" in
     elif (( PROB_N < 0 )); then
       PROB_N=0
     fi
+    if [[ "$QUIET" -eq 0 ]]; then
 
     if [[ "$MODE" == "repo" ]]; then
       echo "=== Mode ==="
@@ -390,10 +393,14 @@ case "$cmd" in
       fi
     fi
 
+    fi
+
     # Default: compact summary (hide OK). Use --verbose to show full tail of summary file.
     VERBOSE=${VERBOSE:-0}
 
-    echo ""; echo "=== Summary (compact) ==="
+    if [[ "$QUIET" -eq 0 ]]; then
+      echo ""; echo "=== Summary (compact) ==="
+    fi
     summary_file=""
     if [[ "$MODE" == "repo" ]]; then
       summary_file="$REPO_SUMMARY_LATEST"
@@ -406,7 +413,7 @@ case "$cmd" in
         echo "(verbose; last $TAIL_N lines from: $summary_file)"
         tail -n "$TAIL_N" "$summary_file" || true
       else
-        echo "(from: $summary_file)"
+        [[ "$QUIET" -eq 0 ]] && echo "(from: $summary_file)"
         python3 - "$summary_file" "$ONLY" "$PROB_N" <<'PY'
 import re, sys
 path, only, limit = sys.argv[1:4]

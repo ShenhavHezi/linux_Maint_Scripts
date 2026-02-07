@@ -34,7 +34,8 @@ bash "$ROOT_DIR/tests/dry_run_no_ssh_test.sh" >/dev/null
 # Sudo-gated tests
 if sudo -n true >/dev/null 2>&1; then
   bash "$ROOT_DIR/tests/wrapper_artifacts_test.sh" >/dev/null
-  bash "$ROOT_DIR/tests/status_contract_test.sh" >/dev/null
+  bash "$ROOT_DIR/tests/status_quiet_test.sh" >/dev/null
+bash "$ROOT_DIR/tests/status_contract_test.sh" >/dev/null
   bash "$ROOT_DIR/tests/summary_reason_lint.sh" >/dev/null
 else
   echo "NOTE: skipping sudo-gated tests (no passwordless sudo)" >&2
