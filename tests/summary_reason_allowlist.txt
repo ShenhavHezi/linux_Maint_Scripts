@@ -1,0 +1,2 @@
+# Exact full summary lines that are allowed to be missing reason=
+echo "##active_line2##"
