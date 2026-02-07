@@ -155,6 +155,16 @@ install_logrotate(){
   delaycompress
   copytruncate
 }
+
+/var/log/health/*.json {
+  daily
+  rotate 14
+  missingok
+  notifempty
+  compress
+  delaycompress
+  copytruncate
+}
 EOF
 }
 

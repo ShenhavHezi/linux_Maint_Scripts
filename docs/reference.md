@@ -674,6 +674,17 @@ Example `logrotate` config (create `/etc/logrotate.d/linux_maint`):
 }
 ```
 
+/var/log/health/*.json {
+  daily
+  rotate 14
+  missingok
+  notifempty
+  compress
+  delaycompress
+  copytruncate
+}
+
+
 Notes:
 - `copytruncate` is used so rotation is safe even if a script is still writing.
 - Tune `rotate`/`daily` to match your retention needs.
