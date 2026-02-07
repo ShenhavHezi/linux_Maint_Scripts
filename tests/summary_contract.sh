@@ -37,6 +37,8 @@ export LM_SSH_OPTS="-o BatchMode=yes -o ConnectTimeout=3"
 export LM_SERVERLIST="/dev/null"
 export LM_EXCLUDED="/dev/null"
 export LM_LOCAL_ONLY="true"
+export LM_INVENTORY_OUTPUT_DIR="/tmp/linux_maint_inventory"
+mkdir -p "$LM_INVENTORY_OUTPUT_DIR" >/dev/null 2>&1 || true
 
 fail=0
 for m in "${monitors[@]}"; do
