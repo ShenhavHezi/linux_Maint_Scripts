@@ -20,6 +20,15 @@ LM_LOGFILE="${LM_LOGFILE:-/var/log/nfs_mount_monitor.log}"
 
 lm_require_singleton "nfs_mount_monitor"
 
+# Dependency checks (local runner)
+lm_require_cmd "nfs_mount_monitor" "localhost" awk || exit $?
+lm_require_cmd "nfs_mount_monitor" "localhost" grep || exit $?
+lm_require_cmd "nfs_mount_monitor" "localhost" sed || exit $?
+lm_require_cmd "nfs_mount_monitor" "localhost" mountpoint || exit $?
+lm_require_cmd "nfs_mount_monitor" "localhost" stat || exit $?
+lm_require_cmd "nfs_mount_monitor" "localhost" timeout || exit $?
+lm_require_cmd "nfs_mount_monitor" "localhost" findmnt --optional || true
+
 mkdir -p "$(dirname "$LM_LOGFILE")" 2>/dev/null || true
 
 MAIL_SUBJECT_PREFIX='[NFS Mount Monitor]'
