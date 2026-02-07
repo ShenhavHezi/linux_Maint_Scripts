@@ -1,4 +1,34 @@
 #!/bin/bash
+# shellcheck disable=SC1090
+set -euo pipefail
+
+# Defaults for standalone runs (wrapper sets these)
+: "${LM_LOCKDIR:=/tmp}"
+: "${LM_LOG_DIR:=.logs}"
+
+# Dependency checks (local runner)
+lm_require_cmd "inventory_export" "localhost" awk || exit $?
+lm_require_cmd "inventory_export" "localhost" flock || exit $?
+lm_require_cmd "inventory_export" "localhost" grep || exit $?
+lm_require_cmd "inventory_export" "localhost" sed || exit $?
+lm_require_cmd "inventory_export" "localhost" sort || exit $?
+lm_require_cmd "inventory_export" "localhost" tr || exit $?
+lm_require_cmd "inventory_export" "localhost" wc || exit $?
+lm_require_cmd "inventory_export" "localhost" paste || exit $?
+lm_require_cmd "inventory_export" "localhost" ip || exit $?
+lm_require_cmd "inventory_export" "localhost" df || exit $?
+lm_require_cmd "inventory_export" "localhost" lsblk || exit $?
+lm_require_cmd "inventory_export" "localhost" free || exit $?
+lm_require_cmd "inventory_export" "localhost" hostname || exit $?
+lm_require_cmd "inventory_export" "localhost" uname || exit $?
+lm_require_cmd "inventory_export" "localhost" date || exit $?
+lm_require_cmd "inventory_export" "localhost" nproc || exit $?
+lm_require_cmd "inventory_export" "localhost" lscpu --optional || true
+lm_require_cmd "inventory_export" "localhost" vgs --optional || true
+lm_require_cmd "inventory_export" "localhost" lvs --optional || true
+lm_require_cmd "inventory_export" "localhost" pvs --optional || true
+lm_require_cmd "inventory_export" "localhost" systemd-detect-virt --optional || true
+
 # inventory_export.sh - Export concise HW/SW inventory per host to a daily CSV (+details)
 # Author: Shenhav_Hezi
 # Version: 2.0 (refactored to use linux_maint.sh)
