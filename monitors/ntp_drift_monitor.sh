@@ -1,18 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC1090
-set -euo pipefail
 
-# Defaults for standalone runs (wrapper sets these)
-: "${LM_LOCKDIR:=/tmp}"
-: "${LM_LOG_DIR:=.logs}"
 
-# Dependency checks (local runner)
-lm_require_cmd "ntp_drift_monitor" "localhost" awk || exit $?
-lm_require_cmd "ntp_drift_monitor" "localhost" grep || exit $?
-lm_require_cmd "ntp_drift_monitor" "localhost" sed || exit $?
-lm_require_cmd "ntp_drift_monitor" "localhost" chronyc --optional || true
-lm_require_cmd "ntp_drift_monitor" "localhost" ntpq --optional || true
-lm_require_cmd "ntp_drift_monitor" "localhost" timedatectl --optional || true
 
 # ntp_drift_monitor.sh - Monitor NTP/chrony/timesyncd sync state & clock drift
 # Author: Shenhav_Hezi
@@ -33,6 +22,19 @@ LM_LOGFILE="${LM_LOGFILE:-/var/log/ntp_drift_monitor.log}"
 : "${LM_EMAIL_ENABLED:=true}" # master email toggle
 
 lm_require_singleton "ntp_drift_monitor"
+
+set -euo pipefail
+# Defaults for standalone runs (wrapper sets these)
+: "${LM_LOCKDIR:=/tmp}"
+: "${LM_LOG_DIR:=.logs}"
+# Dependency checks (local runner)
+lm_require_cmd "ntp_drift_monitor" "localhost" awk || exit $?
+lm_require_cmd "ntp_drift_monitor" "localhost" grep || exit $?
+lm_require_cmd "ntp_drift_monitor" "localhost" sed || exit $?
+lm_require_cmd "ntp_drift_monitor" "localhost" chronyc --optional || true
+lm_require_cmd "ntp_drift_monitor" "localhost" ntpq --optional || true
+lm_require_cmd "ntp_drift_monitor" "localhost" timedatectl --optional || true
+
 
 MAIL_SUBJECT_PREFIX='[NTP Drift Monitor]'
 

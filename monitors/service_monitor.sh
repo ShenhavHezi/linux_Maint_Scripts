@@ -9,16 +9,8 @@
 
 # ===== Shared helpers =====
 
-set -euo pipefail
 
-# Defaults for standalone runs (wrapper sets these)
-: "${LM_LOCKDIR:=/tmp}"
-: "${LM_LOG_DIR:=.logs}"
 
-# Dependency checks (local runner)
-lm_require_cmd "service_monitor" "localhost" awk || exit $?
-lm_require_cmd "service_monitor" "localhost" grep || exit $?
-lm_require_cmd "service_monitor" "localhost" sed || exit $?
 
 . "${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}" || { echo "Missing ${LINUX_MAINT_LIB:-/usr/local/lib/linux_maint.sh}"; exit 1; }
 LM_PREFIX="[service_monitor] "
@@ -27,6 +19,16 @@ LM_LOGFILE="${LM_LOGFILE:-/var/log/service_monitor.log}"
 : "${LM_EMAIL_ENABLED:=true}" # master toggle for lm_mail
 
 lm_require_singleton "service_monitor"
+
+set -euo pipefail
+# Defaults for standalone runs (wrapper sets these)
+: "${LM_LOCKDIR:=/tmp}"
+: "${LM_LOG_DIR:=.logs}"
+# Dependency checks (local runner)
+lm_require_cmd "service_monitor" "localhost" awk || exit $?
+lm_require_cmd "service_monitor" "localhost" grep || exit $?
+lm_require_cmd "service_monitor" "localhost" sed || exit $?
+
 
 _summary_emitted=0
 emit_summary(){ _summary_emitted=1; lm_summary "service_monitor" "$@"; }
